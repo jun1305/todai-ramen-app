@@ -89,7 +89,7 @@
                     class="h-64 bg-gray-100 overflow-hidden flex items-center justify-center"
                 >
                     <img
-                        src="{{ asset('storage/' . $post->image_path) }}"
+                        src="{{ $post->image_path }}"
                         alt="ラーメン画像"
                         class="w-full h-full object-cover"
                     />

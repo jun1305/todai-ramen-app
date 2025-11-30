@@ -43,27 +43,12 @@ class PostController extends Controller
 
         // ★★★ ここから画像保存処理 ★★★
         if ($request->hasFile('image')) {
-            // 1. 画像処理マネージャーを起動
-            $manager = new ImageManager(new Driver());
+            // 1. Cloudinaryにアップロード（'posts'フォルダを指定）
+            // これだけでアップロード＆URL取得が完了します
+            $uploadedFile = $request->file('image')->storeOnCloudinary('posts');
             
-            // 2. アップロードされた画像を読み込む
-            $image = $manager->read($request->file('image'));
-
-            // 3. リサイズ（横幅800px、縦は比率維持）
-            $image->scale(width: 800);
-
-            // 4. 画質を落としてエンコード（JPEG 75%）
-            $encoded = $image->toJpeg(quality: 75);
-
-            // 5. 保存（storage/app/public/posts フォルダへ）
-            // ランダムなファイル名を生成
-            $fileName = 'posts/' . Str::random(40) . '.jpg';
-            
-            // 保存実行
-            Storage::disk('public')->put($fileName, $encoded);
-
-            // パスをDB保存用にセット
-            $post->image_path = $fileName;
+            // 2. ネット上のURL（https://...）を取得してDBに保存
+            $post->image_path = $uploadedFile->getSecurePath();
         }
         // ★★★ ここまで ★★★
 
