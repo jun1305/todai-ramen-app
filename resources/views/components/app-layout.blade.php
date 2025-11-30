@@ -6,6 +6,7 @@
     <title>{{ $title ?? '東大ラーメンログ' }}</title>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('scripts')
 </head>
 <body class="bg-gray-50 text-gray-900 antialiased">
 
