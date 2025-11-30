@@ -64,6 +64,8 @@ Route::middleware('auth')->group(function () {
     // マイページ
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
 
+    Route::get('/users/{id}', [ProfileController::class, 'show'])->name('users.show');
+
     // 通知（既読にする機能）
     Route::post('/notifications/read', [NotificationController::class, 'markAsRead']);
 

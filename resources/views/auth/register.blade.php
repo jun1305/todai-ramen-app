@@ -1,26 +1,43 @@
 <x-app-layout title="会員登録">
     <div class="p-6 pb-20">
-        <h1 class="text-2xl font-bold text-center mb-8">🍜 部員登録</h1>
+        <h1 class="text-2xl font-bold text-center mb-8 flex items-center justify-center gap-2">
+            <span>🍜</span> 部員登録
+        </h1>
 
         <form action="{{ route('register') }}" method="POST" class="space-y-6">
             @csrf
             
             <div>
                 <label class="block text-sm font-bold text-gray-700 mb-1">名前（IDとして使います）</label>
-                <input type="text" name="name" class="w-full p-3 border rounded-lg bg-gray-50" placeholder="例：ラーメン太郎" required>
+                <input type="text" name="name" 
+                       value="{{ old('name') }}" 
+                       class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-orange-200 outline-none transition @error('name') border-red-500 bg-red-50 @enderror" 
+                       placeholder="例：ラーメン太郎" required>
+                
+                @error('name')
+                    <p class="text-red-500 text-xs font-bold mt-1">⚠️ {{ $message }}</p>
+                @enderror
             </div>
 
             <div>
-                <label class="block text-sm font-bold text-gray-700 mb-1">パスワード</label>
-                <input type="password" name="password" class="w-full p-3 border rounded-lg bg-gray-50" required>
+                <label class="block text-sm font-bold text-gray-700 mb-1">パスワード（4文字以上）</label>
+                <input type="password" name="password" 
+                       class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-orange-200 outline-none transition @error('password') border-red-500 bg-red-50 @enderror" 
+                       required>
+                
+                @error('password')
+                    <p class="text-red-500 text-xs font-bold mt-1">⚠️ {{ $message }}</p>
+                @enderror
             </div>
 
             <div>
                 <label class="block text-sm font-bold text-gray-700 mb-1">パスワード（確認用）</label>
-                <input type="password" name="password_confirmation" class="w-full p-3 border rounded-lg bg-gray-50" required>
+                <input type="password" name="password_confirmation" 
+                       class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-orange-200 outline-none transition" 
+                       required>
             </div>
 
-            <button class="w-full bg-orange-500 text-white font-bold py-4 rounded-full shadow-md hover:bg-orange-600 transition">
+            <button class="w-full bg-orange-500 text-white font-bold py-4 rounded-full shadow-md hover:bg-orange-600 transition transform active:scale-95">
                 登録して始める
             </button>
         </form>

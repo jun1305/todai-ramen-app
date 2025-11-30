@@ -2,6 +2,35 @@
     <div
         class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6 text-center relative overflow-hidden"
     >
+        @if(Auth::id() === $user->id)
+        <form
+            action="{{ route('logout') }}"
+            method="POST"
+            class="absolute top-3 right-3 z-20"
+            onsubmit="return confirm('ログアウトしますか？');"
+        >
+            @csrf
+            <button
+                class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition"
+                title="ログアウト"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                    />
+                </svg>
+            </button>
+        </form>
+        @endif
         <div
             class="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-blue-500 to-cyan-400 opacity-10"
         ></div>
@@ -28,6 +57,7 @@
                 <p class="text-2xl font-black text-gray-800">
                     {{ $user->posts_count
 
+
                     }}<span class="text-xs font-normal ml-1">杯</span>
                 </p>
             </div>
@@ -39,6 +69,7 @@
                 </p>
                 <p class="text-2xl font-black text-orange-600">
                     {{ $user->points
+
 
                     }}<span class="text-xs font-normal ml-1">Pt</span>
                 </p>
@@ -95,16 +126,6 @@
         @endif
         <div class="mt-4 px-2">
             {{ $posts->links() }}
-        </div>
-        <div class="mt-8 text-center pb-8">
-            <form action="{{ route('logout') }}" method="POST">
-                @csrf
-                <button
-                    class="text-xs text-gray-400 underline hover:text-gray-600"
-                >
-                    ログアウトする
-                </button>
-            </form>
         </div>
     </div>
 </x-app-layout>

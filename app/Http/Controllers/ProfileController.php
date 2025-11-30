@@ -23,4 +23,18 @@ class ProfileController extends Controller
     
         return view('profile.index', compact('user', 'posts'));
     }
+
+    public function show($id)
+    {
+        // ユーザーを探す（いなかったらエラー）
+        $user = User::withCount('posts')->findOrFail($id);
+
+        // その人の投稿を取得
+        $posts = $user->posts()->with('shop')->latest('eaten_at')->paginate(10);
+
+        // 同じ 'profile.index' ビューを使い回す！
+        return view('profile.index', compact('user', 'posts'));
+    }
+
+    
 }

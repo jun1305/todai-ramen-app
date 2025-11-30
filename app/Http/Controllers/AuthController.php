@@ -18,14 +18,21 @@ class AuthController extends Controller
     // ② 会員登録処理
     public function register(Request $request)
     {
+        // 第2引数に「カスタムエラーメッセージ」を追加できます
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:users', // 名前が被ってないかチェック
-            'password' => 'required|string|min:4|confirmed', // パスワード（短めでもOKにしときました）
+            'name' => 'required|string|max:255|unique:users',
+            'password' => 'required|string|min:4|confirmed',
+        ], [
+            // 日本語メッセージ設定
+            'name.required' => '名前を入力してください。',
+            'name.unique' => 'その名前は既に使用されています（別の名前か、数字をつけてみてください）。',
+            'password.required' => 'パスワードを入力してください。',
+            'password.min' => 'パスワードは4文字以上で入力してください。',
+            'password.confirmed' => '確認用パスワードと一致しません。',
         ]);
 
         $user = User::create([
             'name' => $validated['name'],
-            // 'email' => ... ←削除
             'password' => Hash::make($validated['password']),
         ]);
 

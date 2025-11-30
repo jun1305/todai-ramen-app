@@ -64,17 +64,24 @@
                 class="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden mb-4"
             >
                 <div class="p-3 flex items-center space-x-3">
-                    <div
-                        class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 shrink-0"
+                    <a
+                        href="{{ route('users.show', $post->user->id) }}"
+                        class="flex items-center space-x-3 group"
                     >
-                        {{ mb_substr($post->user->name, 0, 1) }}
-                    </div>
-                    <div>
-                        <p class="text-sm font-bold">{{ $post->user->name }}</p>
-                        <p class="text-xs text-gray-400">
-                            {{ $post->eaten_at->diffForHumans() }}
-                        </p>
-                    </div>
+                        <div
+                            class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 shrink-0"
+                        >
+                            {{ mb_substr($post->user->name, 0, 1) }}
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold">
+                                {{ $post->user->name }}
+                            </p>
+                            <p class="text-xs text-gray-400">
+                                {{ $post->eaten_at->diffForHumans() }}
+                            </p>
+                        </div>
+                    </a>
                 </div>
 
                 @if($post->image_path)
