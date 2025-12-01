@@ -2,18 +2,6 @@
 
 use Illuminate\Support\Str;
 
-// ★ここを追加：DATABASE_URL があれば分解して環境変数を上書きする
-if ($url = env('DATABASE_URL')) {
-    $db = parse_url($url);
-    
-    // putenv で環境変数を上書き
-    putenv('DB_CONNECTION=pgsql');
-    putenv('DB_HOST=' . ($db['host'] ?? ''));
-    putenv('DB_PORT=' . ($db['port'] ?? ''));
-    putenv('DB_DATABASE=' . ltrim($db['path'] ?? '', '/'));
-    putenv('DB_USERNAME=' . ($db['user'] ?? ''));
-    putenv('DB_PASSWORD=' . ($db['pass'] ?? ''));
-}
 
 return [
 
