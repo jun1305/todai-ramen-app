@@ -39,3 +39,5 @@
     
     # ポート80を開ける
     EXPOSE 80
+
+    CMD ["/bin/bash", "-c", "php artisan migrate --force && apache2-foreground"]
