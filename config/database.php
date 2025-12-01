@@ -2,6 +2,19 @@
 
 use Illuminate\Support\Str;
 
+// ★ここを追加：DATABASE_URL があれば分解して環境変数を上書きする
+if ($url = env('DATABASE_URL')) {
+    $db = parse_url($url);
+    
+    // putenv で環境変数を上書き
+    putenv('DB_CONNECTION=pgsql');
+    putenv('DB_HOST=' . ($db['host'] ?? ''));
+    putenv('DB_PORT=' . ($db['port'] ?? ''));
+    putenv('DB_DATABASE=' . ltrim($db['path'] ?? '', '/'));
+    putenv('DB_USERNAME=' . ($db['user'] ?? ''));
+    putenv('DB_PASSWORD=' . ($db['pass'] ?? ''));
+}
+
 return [
 
     /*
@@ -85,17 +98,17 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'url' => env('DB_URL'),
+            'url' => env('DATABASE_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'laravel'),
             'username' => env('DB_USERNAME', 'root'),
             'password' => env('DB_PASSWORD', ''),
-            'charset' => env('DB_CHARSET', 'utf8'),
+            'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => 'prefer',
+            'sslmode' => 'require', // ★NeonはSSL必須なので require に変更
         ],
 
         'sqlsrv' => [
