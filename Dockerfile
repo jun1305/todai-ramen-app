@@ -36,4 +36,4 @@ EXPOSE 80
 # 10. 起動コマンド（マイグレーションしてからApacheを起動）
 # ★ここが重要！シェル経由で実行することでエラーを防ぎます
 # migrate:fresh --seed を実行して、DBを強制リセットする
-CMD ["/bin/bash", "-c", "php artisan migrate:fresh --seed --force && apache2-foreground"]
+CMD ["/bin/bash", "-c", "php artisan migrate --force && apache2-foreground"]
