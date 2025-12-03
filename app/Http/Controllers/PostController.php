@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Post;
+use App\Models\Shop;
 use App\Models\Campaign;
+use Illuminate\Support\Facades\Auth;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
-use Illuminate\Support\Str; // ファイル名生成用
-use Illuminate\Support\Facades\Storage; // 保存用
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
 {
@@ -41,16 +44,34 @@ class PostController extends Controller
         $post->comment = $validated['comment'];
         $post->eaten_at = now();
 
-        // ★★★ ここから画像保存処理 ★★★
+        // ★★★ 画像保存処理（圧縮・リサイズ版） ★★★
         if ($request->hasFile('image')) {
-            // 1. Cloudinaryにアップロード（'posts'フォルダを指定）
-            // これだけでアップロード＆URL取得が完了します
-            $uploadedFile = $request->file('image')->storeOnCloudinary('posts');
+            // 1. 画像処理マネージャーを起動 (GDドライバー使用)
+            $manager = new ImageManager(new Driver());
             
-            // 2. ネット上のURL（https://...）を取得してDBに保存
-            $post->image_path = $uploadedFile->getSecurePath();
+            // 2. アップロードされた画像を読み込む
+            $image = $manager->read($request->file('image'));
+
+            // 3. リサイズ（横幅800px、縦は比率維持）
+            // スマホ写真は横幅3000pxとかあるので、これで劇的に軽くなります
+            $image->scale(width: 800);
+
+            // 4. 画質を落としてエンコード（JPEG 75%）
+            // 見た目はほぼ変わらず、ファイルサイズは1/10くらいになります
+            $encoded = $image->toJpeg(quality: 75);
+
+            // 5. 保存（storage/app/public/posts フォルダへ）
+            // ランダムなファイル名を生成 (例: posts/abcdef12345.jpg)
+            $fileName = 'posts/' . Str::random(40) . '.jpg';
+            
+            // 保存実行
+            Storage::disk('public')->put($fileName, $encoded);
+
+            // パスをDB保存用にセット
+            $post->image_path = $fileName;
         }
-        // ★★★ ここまで ★★★
+        // ★★★★★★★★★★★★★★★★★★★
+
 
         $post->save();
 

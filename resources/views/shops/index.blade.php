@@ -40,7 +40,7 @@
                     >
                         @if($shop->latestPost && $shop->latestPost->image_path)
                         <img
-                            src="{{ $post->image_path }}"
+                            src="{{ asset('storage/' . $post->image_path) }}"
                             class="w-full h-full object-cover"
                         />
                         @else
