@@ -12,14 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         // ① ユーザーテーブル（名前とパスワードのみ）
-        Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->unique(); // 名前（ID代わり）
-            $table->string('password');
-            $table->integer('points')->default(0); // ポイント
-            $table->rememberToken();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('users')) {
+            Schema::create('users', function (Blueprint $table) {
+                $table->id();
+                $table->string('name')->unique(); // 名前（ID代わり）
+                $table->string('password');
+                $table->integer('points')->default(0); // ポイント
+                $table->rememberToken();
+                $table->timestamps();
+            });
+        }
 
 
         // ③ セッションテーブル

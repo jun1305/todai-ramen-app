@@ -38,4 +38,4 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 EXPOSE 80
 
 # 10. 起動コマンド（まずはサーバーを立ち上げることを最優先！）
-CMD ["apache2-foreground"]
+CMD ["/bin/bash", "-c", "php artisan migrate --force && apache2-foreground"]
