@@ -81,18 +81,3 @@ Route::middleware('auth')->group(function () {
 });
 
 
-// ↓↓↓ 以下の行を追加 ↓↓↓
-
-// データベース構築用（Shellが使えない時の緊急用）
-Route::get('/force-db-setup-12345', function () {
-    try {
-        // 1. マイグレーション（テーブル作成）
-        // --force をつけないと本番環境では実行されないので必須
-        \Illuminate\Support\Facades\Artisan::call('migrate:fresh --seed --force');
-        
-        return '成功！データベースをリセットして、初期データを投入しました。';
-    } catch (\Exception $e) {
-        // エラーが出たら画面に表示
-        return 'エラー発生: ' . $e->getMessage();
-    }
-});
