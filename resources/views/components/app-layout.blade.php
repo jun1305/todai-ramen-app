@@ -14,7 +14,7 @@
         
         @include('partials.header')
 
-        <main class="flex-1 overflow-y-auto p-4 scrollbar-hide">
+        <main class="flex-1 overflow-y-auto p-4">
             {{ $slot }}
         </main>
 
