@@ -5,7 +5,7 @@
         }}&libraries=places&language=ja"></script>
     @endpush
 
-    <div class="p-4 overflow-hidden">
+    <div class="p-4 relative overflow-hidden">
         <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">
             🍜 ラーメン記録
         </h2>
