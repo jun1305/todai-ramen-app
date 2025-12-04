@@ -10,7 +10,7 @@
 </head>
 <body class="bg-gray-50 text-gray-900 antialiased">
 
-    <div class="flex flex-col h-screen max-w-md mx-auto bg-white shadow-2xl overflow-hidden relative">
+    <div class="flex flex-col min-h-[100dvh] max-w-md mx-auto bg-white shadow-2xl overflow-hidden relative">
         
         @include('partials.header')
 
