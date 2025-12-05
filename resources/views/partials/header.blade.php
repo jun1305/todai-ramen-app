@@ -1,14 +1,16 @@
 <header class="bg-slate-900 text-white py-3 px-5 shadow-lg sticky top-0 z-30 flex justify-between items-center shrink-0">
     
-    <div class="flex items-center gap-3">
-        <div class="bg-white/10 p-1.5 rounded-full backdrop-blur-sm border border-white/10">
-            <span class="text-xl filter drop-shadow-md block leading-none">🍜</span>
+    <a href="/">
+        <div class="flex items-center gap-3">
+            <div class="bg-white/10 p-1.5 rounded-full backdrop-blur-sm border border-white/10">
+                <span class="text-xl filter drop-shadow-md block leading-none">🍜</span>
+            </div>
+            <h1 class="text-lg font-black tracking-wider text-white">
+                東大ラーメンログ
+            </h1>
         </div>
-        <h1 class="text-lg font-black tracking-wider text-white">
-            東大ラーメンログ
-        </h1>
-    </div>
-    
+    </a>
+
     @auth
     <div class="relative" 
          x-data="{ 
