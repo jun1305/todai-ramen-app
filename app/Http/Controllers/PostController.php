@@ -88,7 +88,7 @@ class PostController extends Controller
         }
 
         // ID:1のユーザーに加算（仮）
-        \App\Models\User::find(1)->increment('points', $points);
+        \App\Models\User::find(\Illuminate\Support\Facades\Auth::id())->increment('points', $points);
         // ★★★★★★★★★★★★★
 
         return redirect('/');
