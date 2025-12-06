@@ -68,11 +68,18 @@
                         href="{{ route('users.show', $post->user->id) }}"
                         class="flex items-center space-x-3 group"
                     >
+                        @if($user->icon_path)
+                        <img
+                            src="{{ asset($user->icon_path) }}"
+                            class="w-full h-full object-cover"
+                        />
+                        @else
                         <div
-                            class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 shrink-0"
+                            class="h-full w-full bg-blue-100 flex items-center justify-center text-blue-600 font-black text-3xl"
                         >
-                            {{ mb_substr($post->user->name, 0, 1) }}
+                            {{ mb_substr($user->name, 0, 1) }}
                         </div>
+                        @endif
                         <div>
                             <p class="text-sm font-bold">
                                 {{ $post->user->name }}

@@ -115,11 +115,18 @@
                 class="p-3 flex items-center justify-between border-b border-gray-50"
             >
                 <div class="flex items-center gap-2">
+                    @if($user->icon_path)
+                    <img
+                        src="{{ asset($user->icon_path) }}"
+                        class="w-full h-full object-cover"
+                    />
+                    @else
                     <div
-                        class="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600"
+                        class="h-full w-full bg-blue-100 flex items-center justify-center text-blue-600 font-black text-3xl"
                     >
-                        {{ mb_substr($post->user->name, 0, 1) }}
+                        {{ mb_substr($user->name, 0, 1) }}
                     </div>
+                    @endif
                     <span
                         class="text-xs font-bold text-gray-700"
                         >{{ $post->user->name }}</span
