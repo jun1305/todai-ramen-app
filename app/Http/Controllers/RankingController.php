@@ -42,11 +42,11 @@ class RankingController extends Controller
                 if ($queryDate) {
                     $query->where('eaten_at', '>=', $queryDate);
                 }
-            }], 'score') // 'score'カラムを合計してポイントとする場合
+            }], 'earned_points') // 'earned_points'カラムを合計してポイントとする場合
             ->get()
             // ポイント（posts_sum_score）がない場合は0にする
             ->each(function($user) {
-                $user->period_points = $user->posts_sum_score ?? 0;
+                $user->period_points = $user->posts_sum_earned_points ?? 0;
                 $user->period_count = $user->posts_count ?? 0;
             })
             ->sortByDesc('period_points') // 集計したポイントでソート

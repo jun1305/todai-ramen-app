@@ -90,7 +90,11 @@ class PostController extends Controller
             $points = 2; // キャンペーン中なら2ポイント
         }
 
-        // ID:1のユーザーに加算（仮）
+        // ★ 変更点: Postsテーブルにもポイントを保存する
+        $post->earned_points = $points; 
+        $post->save(); // ここで一緒に保存
+
+        
         \App\Models\User::find(\Illuminate\Support\Facades\Auth::id())->increment('points', $points);
         // ★★★★★★★★★★★★★
 
