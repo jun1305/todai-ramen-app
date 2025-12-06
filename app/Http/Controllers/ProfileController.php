@@ -7,35 +7,24 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use Illuminate\Support\Facades\Log; // エラーログ用に追加
 
 class ProfileController extends Controller
 {
     public function index() {
-        // ログイン中のユーザーを取得
-        $user = \Illuminate\Support\Facades\Auth::user();
-        
-        // もしログインしてなかったらログイン画面へ（念の為）
+        $user = Auth::user();
         if (!$user) {
             return redirect()->route('login');
         }
-        
-        $user->loadCount('posts'); // 投稿数をカウント
-    
-        // 自分の投稿を取得
+        $user->loadCount('posts');
         $posts = $user->posts()->with('shop')->latest('eaten_at')->paginate(10);
-    
         return view('profile.index', compact('user', 'posts'));
     }
 
     public function show($id)
     {
-        // ユーザーを探す（いなかったらエラー）
         $user = User::withCount('posts')->findOrFail($id);
-
-        // その人の投稿を取得
         $posts = $user->posts()->with('shop')->latest('eaten_at')->paginate(10);
-
-        // 同じ 'profile.index' ビューを使い回す！
         return view('profile.index', compact('user', 'posts'));
     }
 
@@ -43,40 +32,46 @@ class ProfileController extends Controller
     {
         // 1. バリデーション
         $request->validate([
-            'icon' => 'required|image|max:2048', // 2MBまで
+            'icon' => 'required|image|max:2048', 
         ]);
-    
-        $user = auth()->user();
-    
-        // 2. アップロードされたファイルデータを取得
-        $file = $request->file('icon');
-        
-        // 3. 保存先ディレクトリの定義（public/profile_icons）
-        $dir = 'profile_icons';
-        $path = public_path($dir);
-    
-        // ディレクトリがなければ作成（権限設定含む）
-        if (!File::exists($path)) {
-            File::makeDirectory($path, 0755, true);
+
+        // エラー捕捉開始
+        try {
+            $user = Auth::user();
+            $file = $request->file('icon');
+            
+            // 2. 保存先ディレクトリ
+            $dir = 'profile_icons';
+            $path = public_path($dir);
+
+            // ディレクトリ作成
+            if (!File::exists($path)) {
+                File::makeDirectory($path, 0755, true);
+            }
+
+            // 3. 古いアイコン削除
+            if ($user->icon_path && File::exists(public_path($user->icon_path))) {
+                File::delete(public_path($user->icon_path));
+            }
+
+            // 4. ファイル名生成
+            $fileName = time() . '_' . $user->id . '.jpg';
+
+            // 5. 画像保存（修正箇所：moveメソッドを使用するのが確実です）
+            $file->move($path, $fileName);
+
+            // 6. データベース更新
+            // ★Userモデルの $fillable に 'icon_path' が必要です
+            $user->icon_path = $dir . '/' . $fileName;
+            $user->save(); // update()よりsave()の方が確実な場合があります
+
+            return response()->json(['status' => 'success']);
+
+        } catch (\Exception $e) {
+            // エラーが起きたらログに残し、ブラウザにエラー内容を返す
+            Log::error($e);
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
-    
-        // 4. 古いアイコンがあれば削除（ゴミを残さない）
-        if ($user->icon_path && File::exists(public_path($user->icon_path))) {
-            File::delete(public_path($user->icon_path));
-        }
-    
-        // 5. ファイル名を生成（被らないように時間+ID）
-        $fileName = time() . '_' . $user->id . '.jpg';
-    
-        // 6. 画像を直接保存
-        // move()ではなく、File::put()を使って「データの中身をそこに書き込む」処理にします
-        File::put($path . '/' . $fileName, $file->get());
-    
-        // 7. データベースの更新
-        // ユーザーテーブルのicon_pathカラムを更新
-        $user->update(['icon_path' => $dir . '/' . $fileName]);
-    
-        return response()->json(['status' => 'success']);
     }
 
     public function updateName(Request $request)
@@ -84,12 +79,19 @@ class ProfileController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
         ]);
-    
-        $user = auth()->user();
-        $user->update(['name' => $request->name]);
-    
-        return response()->json(['status' => 'success']);
-    }
 
-    
+        try {
+            $user = Auth::user();
+            
+            // Userモデルの $fillable に 'name' があるか確認してください
+            $user->name = $request->name;
+            $user->save();
+
+            return response()->json(['status' => 'success']);
+
+        } catch (\Exception $e) {
+            Log::error($e);
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        }
+    }
 }
