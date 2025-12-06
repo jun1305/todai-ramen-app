@@ -96,4 +96,20 @@ class PostController extends Controller
 
         return redirect('/');
     }
+    public function destroy(Post $post)
+    {
+        // 本人の投稿かどうか確認（セキュリティ対策）
+        if (auth()->id() !== $post->user_id) {
+            abort(403);
+        }
+    
+        // 画像があれば削除する処理（オプション）
+        // if ($post->image_path) {
+        //     \Storage::disk('public')->delete($post->image_path);
+        // }
+    
+        $post->delete();
+    
+        return back(); // マイページにリダイレクト
+    }
 }

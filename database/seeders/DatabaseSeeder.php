@@ -13,13 +13,16 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed the application's database.
      */
-    public function run(): void
-    {
-        // User::factory(10)->create();
+    public function run()
+{
+    // ユーザーを適当に作成（もし必要なら）
+    // \App\Models\User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
-    }
+    // 既存のユーザーID 1番の人向けに、過去の投稿を10個作る
+    \App\Models\Post::factory(10)->create([
+        'user_id' => 1, // 自分のIDに合わせてください
+        // eaten_at を「過去1年間」のランダムな日時にする
+        'eaten_at' => fake()->dateTimeBetween('-1 year', 'now'),
+    ]);
+}
 }
