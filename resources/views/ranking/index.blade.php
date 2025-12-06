@@ -137,4 +137,81 @@
             style="display: none;"
             :style="activeTab === 'shops' ? 'display: block' : 'display: none'"
         >
-            <div class="flex items-center justify-between mb-
+            <div class="flex items-center justify-between mb-2 px-2">
+                <h2 class="text-lg font-bold text-gray-800">人気店ランキング</h2>
+                <span class="text-xs text-gray-500 font-bold bg-orange-50 text-orange-600 px-2 py-1 rounded">
+                    {{ $periods[$currentPeriod] }} / 投稿数順
+                </span>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                @foreach($shops as $index => $shop)
+                <div class="flex items-center p-4 border-b border-gray-100 last:border-none">
+                    {{-- 順位 --}}
+                    <div class="flex-none w-8 flex flex-col items-center justify-center mr-1">
+                        @if($index === 0)
+                            <div class="w-6 h-6 flex items-center justify-center mb-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-yellow-500">
+                                    <path fill-rule="evenodd" d="M12.003 4.978a.75.75 0 01.996.14l2.25 2.75 4.346-3.877a.75.75 0 011.196.852l-2.43 8.163a2.25 2.25 0 01-2.152 1.61H7.794a2.25 2.25 0 01-2.152-1.61L3.212 4.843a.75.75 0 011.196-.852l4.346 3.877 2.25-2.75a.75.75 0 01.999-.14z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <span class="font-black text-xl text-yellow-500 leading-none">{{ $index + 1 }}</span>
+                        @elseif($index === 1)
+                            <div class="w-5 h-5 flex items-center justify-center mb-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-gray-400">
+                                    <path fill-rule="evenodd" d="M12.003 4.978a.75.75 0 01.996.14l2.25 2.75 4.346-3.877a.75.75 0 011.196.852l-2.43 8.163a2.25 2.25 0 01-2.152 1.61H7.794a2.25 2.25 0 01-2.152-1.61L3.212 4.843a.75.75 0 011.196-.852l4.346 3.877 2.25-2.75a.75.75 0 01.999-.14z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <span class="font-bold text-lg text-gray-500 leading-none">{{ $index + 1 }}</span>
+                        @elseif($index === 2)
+                            <div class="w-5 h-5 flex items-center justify-center mb-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-orange-400">
+                                    <path fill-rule="evenodd" d="M12.003 4.978a.75.75 0 01.996.14l2.25 2.75 4.346-3.877a.75.75 0 011.196.852l-2.43 8.163a2.25 2.25 0 01-2.152 1.61H7.794a2.25 2.25 0 01-2.152-1.61L3.212 4.843a.75.75 0 011.196-.852l4.346 3.877 2.25-2.75a.75.75 0 01.999-.14z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <span class="font-bold text-lg text-orange-500 leading-none">{{ $index + 1 }}</span>
+                        @else
+                            <span class="font-bold text-lg text-gray-400 leading-none text-center w-full">{{ $index + 1 }}</span>
+                        @endif
+                    </div>
+
+                    {{-- 店舗情報 --}}
+                    <a href="{{ route('shops.show', $shop->id) }}" class="h-10 w-10 rounded-lg bg-gray-100 overflow-hidden shrink-0 ml-1 mr-3 hover:opacity-80 transition block border border-gray-100 focus:outline-none" style="-webkit-tap-highlight-color: transparent;">
+                        @if($shop->latestPost && $shop->latestPost->image_path)
+                            <img src="{{ asset($shop->latestPost->image_path) }}" class="w-full h-full object-cover" />
+                        @else
+                            <div class="w-full h-full flex items-center justify-center bg-orange-100 text-orange-600 font-bold">
+                                {{ mb_substr($shop->name, 0, 1) }}
+                            </div>
+                        @endif
+                    </a>
+
+                    <div class="flex-1 min-w-0">
+                        <a href="{{ route('shops.show', $shop->id) }}" class="font-bold text-gray-800 hover:text-orange-600 hover:underline transition block truncate text-base focus:outline-none">
+                            {{ $shop->name }}
+                        </a>
+                        <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($shop->name) }}+ラーメン" target="_blank" class="text-xs text-blue-500 hover:underline flex items-center gap-1 mt-0.5 focus:outline-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            地図
+                        </a>
+                    </div>
+
+                    <div class="font-bold text-gray-700 ml-2 shrink-0">
+                        {{ $shop->posts_count }}<span class="text-xs text-gray-400 font-normal ml-0.5">件</span>
+                    </div>
+                </div>
+                @endforeach
+                
+                @if($shops->isEmpty())
+                <div class="py-12 text-center text-gray-400 text-sm">
+                    <p class="mb-2 text-2xl">🍜</p>
+                    この期間の記録はありません
+                </div>
+                @endif
+            </div>
+        </section>
+    </div>
+</x-app-layout>
