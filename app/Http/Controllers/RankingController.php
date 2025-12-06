@@ -50,7 +50,8 @@ class RankingController extends Controller
                 $user->period_count = $user->posts_count ?? 0;
             })
             ->sortByDesc('period_points') // 集計したポイントでソート
-            ->take(5); // ★ここでトップ5に制限
+            ->take(5)
+            ->values(); // ★ここでトップ5に制限
 
         // 4. 人気店ランキング（投稿数順・上位5店）
         $shops = Shop::withCount(['posts' => function ($query) use ($queryDate) {
@@ -64,7 +65,8 @@ class RankingController extends Controller
             }])
             ->orderBy('posts_count', 'desc')
             ->take(5) // ★ここでトップ5に制限
-            ->get();
+            ->get()
+            ->values();
 
         return view('ranking.index', compact('users', 'shops', 'period'));
     }
