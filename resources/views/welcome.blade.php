@@ -226,8 +226,8 @@
                 <p>まだ投稿がありません。<br />あなたが最初の発見者に！</p>
             </div>
             @endif
-            <div class="mt-4">
-                {{ $posts->links() }}
+            <div class="mt-8 pb-10">
+                {{ $posts->links('vendor.pagination.ramen') }}
             </div>
         </div>
     </div>

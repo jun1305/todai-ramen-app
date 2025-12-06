@@ -80,8 +80,8 @@
                 お店が見つかりません... 🍜
             </div>
             @endif
-            <div class="mt-4">
-                {{ $shops->links() }}
+            <div class="mt-8 pb-10">
+                {{ $shops->links('vendor.pagination.ramen') }}
             </div>
         </div>
     </div>
