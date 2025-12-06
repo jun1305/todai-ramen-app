@@ -115,27 +115,33 @@
                 class="p-3 flex items-center justify-between border-b border-gray-50"
             >
                 <div class="flex items-center gap-2">
-                    @if($user->icon_path)
-                    <img
-                        src="{{ asset($user->icon_path) }}"
-                        class="w-full h-full object-cover"
-                    />
-                    @else
-                    <div
-                        class="h-full w-full bg-blue-100 flex items-center justify-center text-blue-600 font-black text-3xl"
-                    >
-                        {{ mb_substr($user->name, 0, 1) }}
+                    {{-- ▼▼▼ アイコン表示修正箇所 ▼▼▼ --}}
+                    <div class="h-6 w-6 rounded-full overflow-hidden shrink-0">
+                        @if($post->user->icon_path)
+                        {{-- 画像がある場合 --}}
+                        <img
+                            src="{{ asset($post->user->icon_path) }}"
+                            class="w-full h-full object-cover"
+                            alt="{{ $post->user->name }}"
+                        />
+                        @else
+                        {{-- 画像がない場合（デフォルト） --}}
+                        <div
+                            class="w-full h-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600"
+                        >
+                            {{ mb_substr($post->user->name, 0, 1) }}
+                        </div>
+                        @endif
                     </div>
-                    @endif
-                    <span
-                        class="text-xs font-bold text-gray-700"
-                        >{{ $post->user->name }}</span
-                    >
+                    {{-- ▲▲▲ 修正ここまで ▲▲▲ --}}
+
+                    <span class="text-xs font-bold text-gray-700">
+                        {{ $post->user->name }}
+                    </span>
                 </div>
-                <span
-                    class="text-[10px] text-gray-400"
-                    >{{ $post->eaten_at->format('Y/m/d') }}</span
-                >
+                <span class="text-[10px] text-gray-400">
+                    {{ $post->eaten_at->format('Y/m/d') }}
+                </span>
             </div>
 
             <div class="flex">

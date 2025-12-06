@@ -68,18 +68,29 @@
                         href="{{ route('users.show', $post->user->id) }}"
                         class="flex items-center space-x-3 group"
                     >
-                        @if($user->icon_path)
-                        <img
-                            src="{{ asset($user->icon_path) }}"
-                            class="w-full h-full object-cover"
-                        />
-                        @else
+                        {{-- ▼▼▼ 修正箇所 ▼▼▼ --}}
                         <div
-                            class="h-full w-full bg-blue-100 flex items-center justify-center text-blue-600 font-black text-3xl"
+                            class="h-8 w-8 rounded-full overflow-hidden shrink-0 border border-gray-100"
                         >
-                            {{ mb_substr($user->name, 0, 1) }}
+                            @if($post->user->icon_path)
+                            {{-- 画像がある場合 --}}
+                            <img
+                                src="{{ asset($post->user->icon_path) }}"
+                                class="w-full h-full object-cover"
+                                alt="{{ $post->user->name }}"
+                            />
+                            @else
+                            {{-- 画像がない場合（デフォルト） --}}
+                            {{-- 元のデザインクラス(bg-blue-100等)をここに適用 --}}
+                            <div
+                                class="w-full h-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600"
+                            >
+                                {{ mb_substr($post->user->name, 0, 1) }}
+                            </div>
+                            @endif
                         </div>
-                        @endif
+                        {{-- ▲▲▲ 修正箇所 ▲▲▲ --}}
+
                         <div>
                             <p class="text-sm font-bold">
                                 {{ $post->user->name }}
