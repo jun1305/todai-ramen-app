@@ -94,7 +94,7 @@
 
                     <div class="h-12 w-12 rounded-lg bg-gray-100 overflow-hidden shrink-0 mr-3">
                             @if($shop->latestPost && $shop->latestPost->image_path)
-                                <img src="{{ asset('storage/' . $shop->latestPost->image_path) }}" class="w-full h-full object-cover">
+                                <img src="{{ asset( $shop->latestPost->image_path) }}" class="w-full h-full object-cover">
                             @else
                                 <div class="w-full h-full flex items-center justify-center bg-orange-100 text-orange-600 font-bold">
                                     {{ mb_substr($shop->name, 0, 1) }}

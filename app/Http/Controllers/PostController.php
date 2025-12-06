@@ -51,23 +51,26 @@ class PostController extends Controller
             
             // 2. アップロードされた画像を読み込む
             $image = $manager->read($request->file('image'));
-
+    
             // 3. リサイズ（横幅800px、縦は比率維持）
-            // スマホ写真は横幅3000pxとかあるので、これで劇的に軽くなります
             $image->scale(width: 800);
-
+    
             // 4. 画質を落としてエンコード（JPEG 75%）
-            // 見た目はほぼ変わらず、ファイルサイズは1/10くらいになります
             $encoded = $image->toJpeg(quality: 75);
-
-            // 5. 保存（storage/app/public/posts フォルダへ）
-            // ランダムなファイル名を生成 (例: posts/abcdef12345.jpg)
-            $fileName = 'posts/' . Str::random(40) . '.jpg';
+    
+            // 5. 保存（public/uploads フォルダへ直接保存）
+            // ランダムなファイル名を生成 (例: uploads/abcdef12345.jpg)
+            $fileName = 'uploads/' . Str::random(40) . '.jpg';
             
-            // 保存実行
-            Storage::disk('public')->put($fileName, $encoded);
-
-            // パスをDB保存用にセット
+            // publicディレクトリ内の実パスを取得
+            $storagePath = public_path($fileName);
+    
+            // 保存実行（Storageファサードは使わず、直接ファイルを書き込む）
+            // public_path() はプロジェクトのルート/public/ を指す
+            file_put_contents($storagePath, $encoded); 
+    
+            // パスをDB保存用にセット (storage/ をつけない)
+            // 例: 'uploads/abcdef12345.jpg'
             $post->image_path = $fileName;
         }
         // ★★★★★★★★★★★★★★★★★★★

@@ -28,7 +28,7 @@
             >
                 @if($shop->latestPost && $shop->latestPost->image_path)
                 <img
-                    src="{{ asset('storage/' . $shop->latestPost->image_path) }}"
+                    src="{{ asset($shop->latestPost->image_path) }}"
                     class="w-full h-full object-cover"
                 />
                 @else
@@ -135,7 +135,7 @@
                 @if($post->image_path)
                 <div class="w-1/3 bg-gray-100">
                     <img
-                        src="{{ asset('storage/' . $post->image_path) }}"
+                        src="{{ asset( $post->image_path) }}"
                         class="w-full h-full object-cover"
                     />
                 </div>

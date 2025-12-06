@@ -113,7 +113,7 @@
             @if($post->image_path)
             <div class="w-24 bg-gray-100 shrink-0">
                 <img
-                    src="{{ asset('storage/' . $post->image_path) }}"
+                    src="{{ asset( $post->image_path) }}"
                     class="w-full h-full object-cover"
                 />
             </div>
