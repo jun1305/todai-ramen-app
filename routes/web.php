@@ -23,6 +23,13 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
+    // パスワードリセット（秘密の質問）
+    Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.forgot');
+    Route::post('/forgot-password', [AuthController::class, 'verifySecretAnswer'])->name('password.verify');
+
+    // 新しいパスワード設定
+    Route::get('/reset-password', [AuthController::class, 'showResetForm'])->name('password.reset.form');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
 });
 
 /*

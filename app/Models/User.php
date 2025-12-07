@@ -23,6 +23,8 @@ class User extends Authenticatable
         'email',
         'password',
         'icon_path',
+        'points',
+        'secret_answer',
     ];
 
     /**

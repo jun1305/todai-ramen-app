@@ -37,6 +37,21 @@
                        required>
             </div>
 
+            <div class="pt-4 border-t border-gray-100">
+                <label class="block text-sm font-bold text-gray-700 mb-1">
+                    🍜 秘密の質問：好きなラーメンの種類は？<br>
+                    <span class="text-xs font-normal text-gray-500">※パスワードを忘れた際に使用します（例：味噌、二郎系、家系など）</span>
+                </label>
+                <input type="text" name="secret_answer" 
+                       value="{{ old('secret_answer') }}"
+                       class="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-orange-200 outline-none transition @error('secret_answer') border-red-500 bg-red-50 @enderror" 
+                       placeholder="回答を入力" required>
+                
+                @error('secret_answer')
+                    <p class="text-red-500 text-xs font-bold mt-1">⚠️ {{ $message }}</p>
+                @enderror
+            </div>
+
             <button class="w-full bg-orange-500 text-white font-bold py-4 rounded-full shadow-md hover:bg-orange-600 transition transform active:scale-95">
                 登録して始める
             </button>
