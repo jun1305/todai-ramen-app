@@ -69,7 +69,7 @@
             <div class="flex-1 bg-orange-50 rounded-xl p-3 border border-orange-100">
                 <p class="text-xs text-orange-400 font-bold mb-1">獲得ポイント</p>
                 <p class="text-2xl font-black text-orange-600">
-                    {{ $user->points }}<span class="text-xs font-normal ml-1">Pt</span>
+                    {{ $user->posts_sum_earned_points ?? 0 }}<span class="text-xs font-normal ml-1">Pt</span>
                 </p>
             </div>
         </div>

@@ -17,13 +17,16 @@ class ProfileController extends Controller
             return redirect()->route('login');
         }
         $user->loadCount('posts');
+        $user->loadSum('posts', 'earned_points');
         $posts = $user->posts()->with('shop')->latest('eaten_at')->paginate(10);
         return view('profile.index', compact('user', 'posts'));
     }
 
     public function show($id)
     {
-        $user = User::withCount('posts')->findOrFail($id);
+        $user = User::withCount('posts')
+                ->withSum('posts', 'earned_points') 
+                ->findOrFail($id);
         $posts = $user->posts()->with('shop')->latest('eaten_at')->paginate(10);
         return view('profile.index', compact('user', 'posts'));
     }
