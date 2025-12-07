@@ -129,9 +129,9 @@
         </div>
         @endif
 
-        <div class="mt-4 px-2">
-            {{ $posts->links() }}
-        </div>
+        <div class="mt-8 pb-10">
+            {{ $posts->links('vendor.pagination.ramen') }}
+        </div> 
     </div>
 
     @if(Auth::id() === $user->id)

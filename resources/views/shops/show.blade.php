@@ -169,8 +169,8 @@
             まだ投稿がありません
         </div>
         @endif
-        <div class="mt-4 px-2">
-            {{ $posts->links() }}
+        <div class="mt-8 pb-10">
+            {{ $posts->links('vendor.pagination.ramen') }}
         </div>
     </div>
 </x-app-layout>
