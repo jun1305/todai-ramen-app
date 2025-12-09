@@ -11,11 +11,14 @@
             defer
             src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
         ></script>
-        
+
         <link
             href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"
             rel="stylesheet"
         />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/images/icon-512.png" />
+        <meta name="theme-color" content="#f97316" />
         <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @stack('scripts')
@@ -32,5 +35,12 @@
 
             @include('partials.footer')
         </div>
+        <script>
+            if ("serviceWorker" in navigator) {
+                navigator.serviceWorker.register("/sw.js").then(function () {
+                    console.log("Service Worker Registered");
+                });
+            }
+        </script>
     </body>
 </html>
