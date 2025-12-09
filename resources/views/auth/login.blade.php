@@ -51,12 +51,32 @@
             </a>
         </div>
 
-        <div class="mt-6 text-center">
+        <div class="mt-6 mb-4 text-center">
             <a
                 href="{{ route('register') }}"
                 class="text-sm text-orange-500 underline"
                 >新しく部員登録する</a
             >
+        </div>
+
+        <div class="mt-10 border-t border-gray-100 pt-6">
+            <div
+                class="bg-orange-50 rounded-xl p-4 text-left border border-orange-100"
+            >
+                <h3
+                    class="font-bold text-gray-800 text-sm flex items-center gap-2 mb-2"
+                >
+                    <span>📱</span> アイコン追加のご案内
+                </h3>
+                <p class="text-xs text-gray-600 leading-relaxed">
+                    ブラウザのメニューから
+                    <span
+                        class="font-bold text-orange-600 bg-white px-1 rounded border border-orange-200"
+                        >ホーム画面に追加</span
+                    >
+                    すると、快適にアクセスできます！
+                </p>
+            </div>
         </div>
     </div>
 </x-app-layout>
