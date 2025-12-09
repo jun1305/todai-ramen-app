@@ -11,6 +11,9 @@ use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use App\Notifications\NewPost; 
+use Illuminate\Support\Facades\Notification;
+use App\Models\User;
 
 class PostController extends Controller
 {
@@ -97,6 +100,12 @@ class PostController extends Controller
         
         \App\Models\User::find(\Illuminate\Support\Facades\Auth::id())->increment('points', $points);
         // ★★★★★★★★★★★★★
+
+        // 1. 自分以外の全ユーザーを取得（自分に通知しても仕方ないので）
+        $users = User::where('id', '!=', Auth::id())->get();
+
+        // 2. その人たちに通知を送る（WebPush設定していない人は自動でスキップされます）
+        Notification::send($users, new NewPost($post));
 
         return redirect('/');
     }
