@@ -89,6 +89,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('/profile/icon', [App\Http\Controllers\ProfileController::class, 'updateIcon'])->name('profile.update_icon');
     Route::post('/profile/name', [App\Http\Controllers\ProfileController::class, 'updateName'])->name('profile.update_name');
+    Route::post('/push/subscribe', [App\Http\Controllers\PushController::class, 'subscribe']);
 });
 
 
