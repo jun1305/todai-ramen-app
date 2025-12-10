@@ -96,7 +96,7 @@
                         {{-- 画像周り: mx-3をやめて ml-1 mr-3 に変更し、距離を詰める --}}
                         <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold ml-1 mr-3 shrink-0 overflow-hidden border border-blue-50">
                             @if($user->icon_path)
-                                <img src="{{ asset($user->icon_path) }}" class="w-full h-full object-cover" />
+                                <img src="{{ asset($user->icon_path) }}" loading="lazy" class="w-full h-full object-cover" />
                             @else
                                 {{ mb_substr($user->name, 0, 1) }}
                             @endif
@@ -178,7 +178,7 @@
                     {{-- 店舗情報 --}}
                     <a href="{{ route('shops.show', $shop->id) }}" class="h-10 w-10 rounded-lg bg-gray-100 overflow-hidden shrink-0 ml-1 mr-3 hover:opacity-80 transition block border border-gray-100 focus:outline-none" style="-webkit-tap-highlight-color: transparent;">
                         @if($shop->latestPost && $shop->latestPost->image_path)
-                            <img src="{{ asset($shop->latestPost->image_path) }}" class="w-full h-full object-cover" />
+                            <img src="{{ asset($shop->latestPost->image_path) }}" loading="lazy" class="w-full h-full object-cover" />
                         @else
                             <div class="w-full h-full flex items-center justify-center bg-orange-100 text-orange-600 font-bold">
                                 {{ mb_substr($shop->name, 0, 1) }}

@@ -29,6 +29,7 @@
                 @if($shop->latestPost && $shop->latestPost->image_path)
                 <img
                     src="{{ asset($shop->latestPost->image_path) }}"
+                    loading="lazy"
                     class="w-full h-full object-cover"
                 />
                 @else
@@ -121,6 +122,7 @@
                         {{-- 画像がある場合 --}}
                         <img
                             src="{{ asset($post->user->icon_path) }}"
+                            loading="lazy"
                             class="w-full h-full object-cover"
                             alt="{{ $post->user->name }}"
                         />
@@ -149,6 +151,7 @@
                 <div class="w-1/3 bg-gray-100">
                     <img
                         src="{{ asset( $post->image_path) }}"
+                        loading="lazy"
                         class="w-full h-full object-cover"
                     />
                 </div>

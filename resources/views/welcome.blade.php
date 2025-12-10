@@ -76,6 +76,7 @@
                             {{-- 画像がある場合 --}}
                             <img
                                 src="{{ asset($post->user->icon_path) }}"
+                                loading="lazy"
                                 class="w-full h-full object-cover"
                                 alt="{{ $post->user->name }}"
                             />
@@ -108,6 +109,7 @@
                 >
                     <img
                         src="{{ asset($post->image_path) }}"
+                        loading="lazy"
                         alt="ラーメン画像"
                         class="w-full h-full object-cover"
                     />

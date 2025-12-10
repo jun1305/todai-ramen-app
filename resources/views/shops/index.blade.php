@@ -41,6 +41,7 @@
                         @if($shop->latestPost && $shop->latestPost->image_path)
                         <img
                             src="{{ asset($shop->latestPost->image_path) }}"
+                            loading="lazy"
                             class="w-full h-full object-cover"
                         />
                         @else

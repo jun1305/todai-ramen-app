@@ -27,7 +27,7 @@
         >
             <div class="h-full w-full rounded-full overflow-hidden relative">
                 @if($user->icon_path)
-                    <img src="{{ asset($user->icon_path) }}" class="w-full h-full object-cover" />
+                    <img src="{{ asset($user->icon_path) }}" loading="lazy" class="w-full h-full object-cover" />
                 @else
                     <div class="h-full w-full bg-blue-100 flex items-center justify-center text-blue-600 font-black text-3xl">
                         {{ mb_substr($user->name, 0, 1) }}
@@ -238,7 +238,7 @@
 
             @if($post->image_path)
             <div class="w-24 bg-gray-100 shrink-0">
-                <img src="{{ asset($post->image_path) }}" class="w-full h-full object-cover" />
+                <img src="{{ asset($post->image_path) }}" loading="lazy" class="w-full h-full object-cover" />
             </div>
             @endif
         </div>
