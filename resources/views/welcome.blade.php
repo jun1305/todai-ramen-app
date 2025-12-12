@@ -1,236 +1,150 @@
 <x-app-layout title="ホーム">
-    <div class="p- text-center">
-        @if($campaign)
-        <div class="mb-6 px-1">
-            <div
-                class="relative bg-gradient-to-br from-red-600 to-red-700 rounded-2xl p-4 text-white shadow-md shadow-red-200 overflow-hidden group"
-            >
-                <div
-                    class="absolute -right-4 -bottom-8 text-white opacity-10 font-black text-8xl italic select-none pointer-events-none transform group-hover:scale-110 transition duration-700"
-                >
-                    x{{ $campaign->multiplier }}
-                </div>
+    <div class="bg-gray-50 min-h-screen pb-7">
+        
+        {{-- メインカラム: 上下の余白(pt)と左右の余白(px)を少し詰めました --}}
+        <div class="max-w-md mx-auto pt-4 px-2">
 
-                <div class="relative z-10 flex justify-between items-center">
-                    <div class="flex-1 pr-2">
-                        <div class="flex items-baseline gap-2 mb-2">
-                            <span
-                                class="bg-white/20 backdrop-blur-sm text-[10px] font-bold px-2 py-0.5 rounded-full text-white border border-white/10 shrink-0"
-                            >
-                                PICKUP
-                            </span>
-                            <h2
-                                class="text-lg font-black leading-tight tracking-tight line-clamp-1"
-                            >
-                                {{ $campaign->title }}
-                            </h2>
-                        </div>
-
-                        <div
-                            class="flex items-center gap-1 text-xs font-bold text-red-100"
-                        >
-                            <span
-                                class="bg-yellow-400 w-1.5 h-1.5 rounded-full animate-pulse"
-                            ></span>
-                            今ならポイント{{ $campaign->multiplier }}倍！
-                        </div>
+            {{-- ▼▼▼ キャンペーン（ご指定のコード） ▼▼▼ --}}
+            @if($campaign)
+            <div class="mb-4 px-1"> {{-- mb-6だと広いので mb-4 に詰めました --}}
+                <div class="relative bg-gradient-to-br from-red-600 to-red-700 rounded-2xl p-4 text-white shadow-md shadow-red-200 overflow-hidden group">
+                    <div class="absolute -right-4 -bottom-8 text-white opacity-10 font-black text-8xl italic select-none pointer-events-none transform group-hover:scale-110 transition duration-700">
+                        x{{ $campaign->multiplier }}
                     </div>
 
-                    <a
-                        href="https://www.google.com/maps/search/?api=1&query={{ urlencode($campaign->shop->name ?? '') }}+ラーメン"
-                        target="_blank"
-                        class="shrink-0 inline-flex items-center justify-center bg-white text-red-700 text-xs font-bold w-10 h-10 rounded-full hover:bg-red-50 transition shadow-sm group-hover:shadow-md"
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-5 w-5"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                        >
-                            <path
-                                fill-rule="evenodd"
-                                d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                                clip-rule="evenodd"
-                            />
-                        </svg>
-                    </a>
-                </div>
-            </div>
-        </div>
-        @endif
-        <div class="mt-4 space-y-4">
-            @foreach($posts as $post)
-            <div
-                class="bg-white rounded-lg border border-gray-100 shadow-sm overflow-hidden mb-4"
-            >
-                <div class="p-3 flex items-center space-x-3">
-                    <a
-                        href="{{ route('users.show', $post->user->id) }}"
-                        class="flex items-center space-x-3 group"
-                    >
-                        {{-- ▼▼▼ 修正箇所 ▼▼▼ --}}
-                        <div
-                            class="h-8 w-8 rounded-full overflow-hidden shrink-0 border border-gray-100"
-                        >
-                            @if($post->user->icon_path)
-                            {{-- 画像がある場合 --}}
-                            <img
-                                src="{{ asset($post->user->icon_path) }}"
-                                loading="lazy"
-                                class="w-full h-full object-cover"
-                                alt="{{ $post->user->name }}"
-                            />
-                            @else
-                            {{-- 画像がない場合（デフォルト） --}}
-                            {{-- 元のデザインクラス(bg-blue-100等)をここに適用 --}}
-                            <div
-                                class="w-full h-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600"
-                            >
-                                {{ mb_substr($post->user->name, 0, 1) }}
+                    <div class="relative z-10 flex justify-between items-center">
+                        <div class="flex-1 pr-2">
+                            <div class="flex items-baseline gap-2 mb-2">
+                                <span class="bg-white/20 backdrop-blur-sm text-[10px] font-bold px-2 py-0.5 rounded-full text-white border border-white/10 shrink-0">
+                                    PICKUP
+                                </span>
+                                <h2 class="text-lg font-black leading-tight tracking-tight line-clamp-1">
+                                    {{ $campaign->title }}
+                                </h2>
                             </div>
-                            @endif
+
+                            <div class="flex items-center gap-1 text-xs font-bold text-red-100">
+                                <span class="bg-yellow-400 w-1.5 h-1.5 rounded-full animate-pulse"></span>
+                                今ならポイント{{ $campaign->multiplier }}倍！
+                            </div>
                         </div>
-                        {{-- ▲▲▲ 修正箇所 ▲▲▲ --}}
 
-                        <div>
-                            <p class="text-sm font-bold">
-                                {{ $post->user->name }}
-                            </p>
-                            <p class="text-xs text-gray-400">
-                                {{ $post->eaten_at->diffForHumans() }}
-                            </p>
-                        </div>
-                    </a>
-                </div>
-
-                @if($post->image_path)
-                <div
-                    class="h-64 bg-gray-100 overflow-hidden flex items-center justify-center"
-                >
-                    <img
-                        src="{{ asset($post->image_path) }}"
-                        loading="lazy"
-                        alt="ラーメン画像"
-                        class="w-full h-full object-cover"
-                    />
-                </div>
-                @else
-                <div
-                    class="h-48 bg-gray-50 flex items-center justify-center text-gray-300"
-                >
-                    <div class="text-center">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-12 w-12 mx-auto mb-2"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            />
-                        </svg>
-                        <span class="text-sm">No Image</span>
-                    </div>
-                </div>
-                @endif
-
-                <div class="p-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <h4
-                            class="font-bold text-lg text-gray-800 flex items-center gap-2"
-                        >
-                            <a
-                                href="{{ route('shops.show', $post->shop->id) }}"
-                                class="hover:text-orange-600 hover:underline transition"
-                            >
-                                {{ $post->shop->name }}
-                            </a>
-
-                            <a
-                                href="https://www.google.com/maps/search/?api=1&query={{ urlencode($post->shop->name) }}+ラーメン"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="text-gray-400 hover:text-red-500 transition"
-                                title="Googleマップで見る"
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    class="h-5 w-5"
-                                    viewBox="0 0 20 20"
-                                    fill="currentColor"
-                                >
-                                    <path
-                                        fill-rule="evenodd"
-                                        d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                                        clip-rule="evenodd"
-                                    />
-                                </svg>
-                            </a>
-                        </h4>
-                        <div class="flex text-orange-400 text-sm">
-                            @for($i=0; $i<$post->score; $i++) ★ @endfor
-                        </div>
-                    </div>
-                    <p class="text-gray-600 leading-relaxed">
-                        {{ $post->comment }}
-                    </p>
-
-                    <div
-                        class="flex items-center justify-end border-t border-gray-50 pt-2"
-                        x-data="{ 
-                        liked: {{ $post->isLikedBy(Auth::user()) ? 'true' : 'false' }}, 
-                        count: {{ $post->likes->count() }} 
-                     }"
-                    >
-                        <button
-                            @click="
-                        fetch('/posts/{{ $post->id }}/like', {
-                            method: 'POST',
-                            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            liked = (data.status === 'added');
-                            count = data.count;
-                        })"
-                            class="flex items-center gap-1 transition"
-                            :class="liked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-6 w-6 transition transform active:scale-125"
-                                :fill="liked ? 'currentColor' : 'none'"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                                />
+                        <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($campaign->shop->name ?? '') }}+ラーメン"
+                           target="_blank"
+                           class="shrink-0 inline-flex items-center justify-center bg-white text-red-700 text-xs font-bold w-10 h-10 rounded-full hover:bg-red-50 transition shadow-sm group-hover:shadow-md">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
                             </svg>
-
-                            <span
-                                class="text-sm font-bold"
-                                x-text="count"
-                            ></span>
-                        </button>
+                        </a>
                     </div>
                 </div>
-            </div>
-            @endforeach @if($posts->isEmpty())
-            <div class="text-center py-10 text-gray-400">
-                <p>まだ投稿がありません。<br />あなたが最初の発見者に！</p>
             </div>
             @endif
-            <div class="mt-8 pb-10">
+            {{-- ▲▲▲ キャンペーンここまで ▲▲▲ --}}
+
+            {{-- ▼▼▼ 投稿フィード ▼▼▼ --}}
+            {{-- space-y-8 だと広すぎるので space-y-4 (16px) に詰めました --}}
+            <div class="space-y-4">
+                @foreach($posts as $post)
+                <div class="bg-white rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] overflow-hidden border border-gray-100/50">
+                    
+                    {{-- 1. ヘッダー --}}
+                    {{-- 上下のpaddingを py-4 から py-3 に少し詰めました --}}
+                    <div class="px-4 py-3 flex items-center justify-between">
+                        <a href="{{ route('users.show', $post->user->id) }}" class="flex items-center gap-3 group">
+                            <div class="h-9 w-9 rounded-full overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-100">
+                                @if($post->user->icon_path)
+                                    <img src="{{ asset($post->user->icon_path) }}" class="w-full h-full object-cover" alt="{{ $post->user->name }}" />
+                                @else
+                                    <div class="w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center text-orange-500 font-black text-xs">
+                                        {{ mb_substr($post->user->name, 0, 1) }}
+                                    </div>
+                                @endif
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-gray-900 leading-none group-hover:text-orange-600 transition">{{ $post->user->name }}</p>
+                                <p class="text-[10px] text-gray-400 mt-0.5 font-medium flex items-center gap-1">
+                                    {{-- 日付 --}}
+                                    <span>{{ $post->eaten_at->format('Y.m.d') }}</span>
+                                    
+                                    {{-- 区切り線 --}}
+                                    <span class="text-gray-300">•</span>
+                                    
+                                    {{-- 相対時間（例: 3日前、1週間前） --}}
+                                    <span>{{ $post->eaten_at->diffForHumans() }}</span>
+                                </p>
+                            </div>
+                        </a>
+                    </div>
+
+                    {{-- 2. 画像 --}}
+                    <div class="relative w-full aspect-square bg-gray-100">
+                        @if($post->image_path)
+                            <img src="{{ asset($post->image_path) }}" loading="lazy" class="w-full h-full object-cover" alt="ラーメン画像" />
+                        @else
+                            <div class="w-full h-full flex flex-col items-center justify-center text-gray-300 bg-gray-50">
+                                <span class="text-xs font-bold tracking-widest uppercase">No Image</span>
+                            </div>
+                        @endif
+
+                        {{-- 点数バッジ --}}
+                        <div class="absolute bottom-3 right-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-xl shadow-lg border border-white/50 flex items-baseline gap-1">
+                            <span class="text-xl font-black text-orange-500 tracking-tighter">{{ $post->score }}</span>
+                            <span class="text-[9px] font-bold text-gray-500">点</span>
+                        </div>
+                    </div>
+
+                    {{-- 3. アクション & コンテンツ --}}
+                    {{-- 余白を px-5 から px-4 に微調整 --}}
+                    <div class="px-4 pt-3 pb-5">
+                        <div class="flex items-center justify-between mb-2">
+                            {{-- いいね --}}
+                            <div x-data="{ liked: {{ $post->isLikedBy(Auth::user()) ? 'true' : 'false' }}, count: {{ $post->likes->count() }} }">
+                                <button @click="fetch('/posts/{{ $post->id }}/like', { method: 'POST', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } }).then(res => res.json()).then(data => { liked = (data.status === 'added'); count = data.count; })"
+                                    class="flex items-center gap-1.5 group -ml-1 p-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transition-colors duration-300" :class="liked ? 'text-red-500 fill-current' : 'text-gray-800'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                    </svg>
+                                    <span x-show="count > 0" x-text="count" class="text-xs font-bold text-gray-700"></span>
+                                </button>
+                            </div>
+
+                            {{-- マップ --}}
+                            <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($post->shop->name) }}+ラーメン" target="_blank" class="text-gray-400 hover:text-green-600 transition p-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </a>
+                        </div>
+
+                        <div class="mb-1">
+                            <a href="{{ route('shops.show', $post->shop->id) }}" class="text-base font-black text-gray-900 hover:text-orange-600 transition line-clamp-1">
+                                {{ $post->shop->name }}
+                            </a>
+                        </div>
+                        
+                        <p class="text-xs text-gray-700 leading-relaxed font-medium line-clamp-3">
+                            {{ $post->comment }}
+                        </p>
+                    </div>
+
+                </div>
+                @endforeach
+            </div>
+
+            {{-- ページネーション --}}
+            <div class="mt-6 mb-5">
                 {{ $posts->links('vendor.pagination.ramen') }}
             </div>
+            
+            {{-- 空の状態 --}}
+            @if($posts->isEmpty())
+            <div class="text-center py-20 text-gray-400">
+                <p class="font-bold">まだ投稿がありません</p>
+            </div>
+            @endif
+
         </div>
     </div>
 </x-app-layout>

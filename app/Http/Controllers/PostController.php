@@ -29,7 +29,7 @@ class PostController extends Controller
         // 入力チェック（画像も追加）
         $validated = $request->validate([
             'shop_name' => 'required',
-            'score' => 'required|integer|min:1|max:5',
+            'score' => 'required|numeric|min:0|max:100',
             'comment' => 'nullable|string',
             'image' => 'nullable|image|max:10240', // 10MBまでの画像
         ]);
@@ -147,7 +147,7 @@ class PostController extends Controller
 
         $validated = $request->validate([
             'shop_name' => 'required',
-            'score' => 'required|integer|min:1|max:5',
+            'score' => 'required|numeric|min:0|max:100',
             'comment' => 'nullable|string',
             'image' => 'nullable|image|max:10240',
         ]);
