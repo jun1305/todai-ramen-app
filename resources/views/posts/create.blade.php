@@ -147,11 +147,8 @@
                     if (newVal > 100) newVal = 100;
                     if (newVal < 0) newVal = 0;
                     // 桁数調整
-                    if (this.step >= 1) {
-                        this.score = Math.round(newVal);
-                    } else {
-                        this.score = parseFloat(newVal.toFixed(1)); 
-                    }
+                    this.score = parseFloat(newVal.toFixed(1)); 
+                    
                 },
 
                 // 手入力時のチェック
