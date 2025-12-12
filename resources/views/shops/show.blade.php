@@ -2,7 +2,11 @@
     <div class="bg-white p-6 shadow-sm border-b border-gray-100 mb-4 -mx-4 -mt-4 pt-8 relative">
         
         {{-- 戻るボタン --}}
-        <a href="{{ route('shops.index') }}" class="absolute left-1 top-4 text-gray-400 hover:text-gray-600 transition p-4 rounded-full active:bg-gray-50 z-10">
+        <a 
+            href="{{ route('shops.index') }}" 
+            onclick="event.preventDefault(); history.back();"
+            class="absolute left-1 top-4 text-gray-400 hover:text-gray-600 transition p-4 rounded-full active:bg-gray-50 z-10"
+        >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>

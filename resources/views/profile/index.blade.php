@@ -6,8 +6,20 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     @endpush
 
+
+
     <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6 text-center relative overflow-hidden">
         
+        <a 
+            href="{{ route('home') }}" 
+            onclick="event.preventDefault(); history.back();"
+            class="absolute top-3 left-3 z-20 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition"
+            title="戻る"
+        >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+        </a>
         @if(Auth::id() === $user->id)
         <form action="{{ route('logout') }}" method="POST" class="absolute top-3 right-3 z-20" onsubmit="return confirm('ログアウトしますか？');">
             @csrf
