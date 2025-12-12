@@ -1,39 +1,47 @@
-<header class="bg-slate-900 text-white py-3 px-5 shadow-lg sticky top-0 z-30 flex justify-between items-center shrink-0">
+<header 
+    x-data="{ menuOpen: false }" 
+    class="bg-slate-900 text-white py-3 px-4 shadow-lg sticky top-0 z-30 flex justify-between items-center shrink-0"
+>
     
-    <a href="/">
-        <div class="flex items-center gap-3">
+    {{-- ▼▼▼ 左側エリア（メニューボタン ＋ ロゴ） ▼▼▼ --}}
+    <div class="flex items-center gap-3">
+        
+        {{-- ハンバーガーメニューボタン --}}
+        <button @click="menuOpen = true" class="p-1 -ml-1 text-gray-300 hover:text-white transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+        </button>
+
+        {{-- ロゴリンク --}}
+        <a href="/" class="flex items-center gap-2">
             <div class="bg-white/10 p-1.5 rounded-full backdrop-blur-sm border border-white/10">
-                <span class="text-xl filter drop-shadow-md block leading-none">🍜</span>
+                <span class="text-lg filter drop-shadow-md block leading-none">🍜</span>
             </div>
-            <h1 class="text-lg font-black tracking-wider text-white">
+            <h1 class="text-base font-black tracking-wider text-white">
                 東大ラーメンログ
             </h1>
-        </div>
-    </a>
+        </a>
+    </div>
 
+    {{-- ▼▼▼ 右側エリア（通知ベル） ▼▼▼ --}}
     @auth
     <div class="relative" 
          x-data="{ 
              open: false,
-             // PHPから「未読があるか？」を受け取ってJSの変数にする
              hasUnread: {{ Auth::check() && Auth::user()->unreadNotifications->count() > 0 ? 'true' : 'false' }},
-             
-             // 読み込み処理
              markAsRead() {
                  if (this.hasUnread) {
-                     // 裏側で既読にする
                      fetch('/notifications/read', { 
                          method: 'POST',
                          headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
                      });
-                     // 見た目はすぐに赤丸を消す
                      this.hasUnread = false;
                  }
              }
          }">
         
         <button @click="open = !open; markAsRead()" class="relative p-2 text-gray-300 hover:text-white hover:bg-white/10 rounded-full transition duration-300">
-            
             <span x-show="hasUnread" 
                   x-transition.opacity
                   class="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-slate-900 shadow-sm animate-pulse"></span>
@@ -43,15 +51,14 @@
             </svg>
         </button>
 
+        {{-- 通知ドロップダウン --}}
         <div x-show="open" 
              @click.away="open = false"
-             style="display: none;"
+             x-cloak
              class="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden text-gray-800 z-50">
-            
             <div class="px-4 py-2 bg-gray-50 border-b border-gray-100 font-bold text-xs text-gray-500">
                 お知らせ
             </div>
-
             <div class="max-h-64 overflow-y-auto">
                 @auth
                     @forelse(Auth::user()->notifications as $notification)
@@ -71,7 +78,84 @@
                 @endauth
             </div>
         </div>
-
     </div>
     @endauth
+
+    {{-- ▼▼▼ スライドメニュー（ドロワー） ▼▼▼ --}}
+    <div x-show="menuOpen" 
+         class="fixed inset-0 z-50 flex" 
+         style="display: none;" 
+         x-cloak>
+        
+        {{-- 背景（黒い半透明・クリックで閉じる） --}}
+        <div @click="menuOpen = false"
+             x-show="menuOpen"
+             x-transition:enter="transition-opacity ease-linear duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition-opacity ease-linear duration-300"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 bg-black/60 backdrop-blur-sm">
+        </div>
+
+        {{-- メニュー本体 --}}
+        <nav x-show="menuOpen"
+             x-transition:enter="transition ease-in-out duration-300 transform"
+             x-transition:enter-start="-translate-x-full"
+             x-transition:enter-end="translate-x-0"
+             x-transition:leave="transition ease-in-out duration-300 transform"
+             x-transition:leave-start="translate-x-0"
+             x-transition:leave-end="-translate-x-full"
+             class="relative bg-white w-64 h-full shadow-2xl flex flex-col max-w-[80vw]">
+            
+            {{-- メニューヘッダー --}}
+            <div class="p-4 bg-slate-900 text-white flex justify-between items-center">
+                <span class="font-bold text-lg">メニュー</span>
+                <button @click="menuOpen = false" class="text-gray-400 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            {{-- メニューリンク一覧 --}}
+            <div class="flex-1 overflow-y-auto py-2">
+                <a href="/" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
+                    <span class="text-xl">🏠</span>
+                    <span class="font-bold">ホーム</span>
+                </a>
+                <a href="{{ route('ranking.index') }}" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
+                    <span class="text-xl">👑</span>
+                    <span class="font-bold">ランキング</span>
+                </a>
+                <a href="{{ route('shops.index') }}" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
+                    <span class="text-xl">🍜</span>
+                    <span class="font-bold">お店図鑑</span>
+                </a>
+                @auth
+                <a href="{{ route('profile.index') }}" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition">
+                    <span class="text-xl">👤</span>
+                    <span class="font-bold">マイページ</span>
+                </a>
+                @endauth
+            </div>
+
+            {{-- メニューフッター（ログアウトなど） --}}
+            @auth
+            <div class="p-4 border-t border-gray-100 bg-gray-50">
+                <form action="{{ route('logout') }}" method="POST">
+                    @csrf
+                    <button class="flex items-center justify-center gap-2 w-full py-2 bg-white border border-gray-200 rounded-lg text-gray-600 font-bold hover:bg-gray-100 hover:text-red-500 transition shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        ログアウト
+                    </button>
+                </form>
+            </div>
+            @endauth
+        </nav>
+    </div>
+
 </header>

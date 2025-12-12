@@ -125,4 +125,68 @@ class PostController extends Controller
     
         return back(); // マイページにリダイレクト
     }
+
+    // ③ 編集画面を表示する
+    public function edit(Post $post)
+    {
+        // 本人の投稿でなければエラー
+        if (Auth::id() !== $post->user_id) {
+            abort(403);
+        }
+
+        return view('posts.edit', compact('post'));
+    }
+
+    // ④ 投稿を更新する
+    public function update(Request $request, Post $post)
+    {
+        // 本人の投稿でなければエラー
+        if (Auth::id() !== $post->user_id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'shop_name' => 'required',
+            'score' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string',
+            'image' => 'nullable|image|max:10240',
+        ]);
+
+        // 1. 店の更新（名前が変わっている可能性があるため）
+        $shop = \App\Models\Shop::firstOrCreate(
+            ['name' => $validated['shop_name']]
+        );
+
+        // 2. データのセット
+        $post->shop_id = $shop->id;
+        $post->score = $validated['score'];
+        $post->comment = $validated['comment'];
+        // $post->eaten_at は変更しない（過去の記録なので）
+
+        // ★★★ 画像の差し替え処理 ★★★
+        if ($request->hasFile('image')) {
+            // A. 古い画像があれば削除する
+            if ($post->image_path && file_exists(public_path($post->image_path))) {
+                unlink(public_path($post->image_path));
+            }
+
+            // B. 新しい画像を保存（storeメソッドと同じロジック）
+            $manager = new ImageManager(new Driver());
+            $image = $manager->read($request->file('image'));
+            $image->scale(width: 800);
+            $encoded = $image->toJpeg(quality: 75);
+
+            $fileName = 'uploads/' . Str::random(40) . '.jpg';
+            $storagePath = public_path($fileName);
+            file_put_contents($storagePath, $encoded);
+
+            // パス更新
+            $post->image_path = $fileName;
+        }
+        // ★★★★★★★★★★★★★★★★★
+
+        $post->save();
+
+        return redirect()->route('profile.index')->with('success', '投稿を更新しました！');
+    }
 }
