@@ -6,7 +6,7 @@
         x-cloak
     >
         {{-- ヘッダー部分 --}}
-        <div class="bg-white shadow-sm sticky top-0 z-30">
+        <div class="bg-white shadow-sm sticky top-0 z-5">
             <div class="p-4 space-y-4">
                 
                 {{-- ① タブ切り替え --}}

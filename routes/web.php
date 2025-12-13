@@ -12,6 +12,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PushController; // ← 追加: 下でフルパスで書かれていたため
 use App\Models\Post;
 use App\Models\Campaign; // ← 追加: ロジック内で使用しているため
+use App\Http\Controllers\RallyController;
 
 /*
 |--------------------------------------------------------------------------
@@ -63,6 +64,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/shops', [ShopController::class, 'index'])->name('shops.index');
     Route::get('/shops/{id}', [ShopController::class, 'show'])->name('shops.show');
     Route::get('/ranking', [RankingController::class, 'index'])->name('ranking.index');
+
+    // ▼ ラーメンラリー（ここに追加）
+    Route::get('/rallies', [RallyController::class, 'index'])->name('rallies.index');
+    Route::get('/rallies/create', [RallyController::class, 'create'])->name('rallies.create');
+    Route::post('/rallies', [RallyController::class, 'store'])->name('rallies.store');
+    Route::get('/rallies/{id}', [RallyController::class, 'show'])->name('rallies.show');
+    Route::post('/rallies/{id}/join', [RallyController::class, 'join'])->name('rallies.join');
 
     // ▼ マイページ・ユーザー設定
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');

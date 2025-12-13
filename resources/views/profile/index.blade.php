@@ -129,20 +129,36 @@
         </script>
         @endif
 
-        <div class="flex justify-center gap-4 relative z-10 mt-4">
-            <div class="flex-1 bg-gray-50 rounded-xl p-3 border border-gray-100">
-                <p class="text-xs text-gray-400 font-bold mb-1">食べた杯数</p>
-                <p class="text-2xl font-black text-gray-800">
-                    {{ $user->posts_count }}<span class="text-xs font-normal ml-1">杯</span>
+        {{-- ステータス表示エリア --}}
+        {{-- ▼▼▼ 修正: gap-4 を gap-2 にして3つ並んでも崩れないように調整 ▼▼▼ --}}
+        <div class="flex justify-center gap-2 relative z-10 mt-4 px-2">
+            
+            {{-- 1. 食べた杯数 --}}
+            <div class="flex-1 bg-gray-50 rounded-xl p-2 py-3 border border-gray-100">
+                <p class="text-[10px] text-gray-400 font-bold mb-1">食べた杯数</p>
+                <p class="text-xl font-black text-gray-800">
+                    {{ $user->posts_count }}<span class="text-[10px] font-normal ml-0.5">杯</span>
                 </p>
             </div>
-            <div class="flex-1 bg-orange-50 rounded-xl p-3 border border-orange-100">
-                <p class="text-xs text-orange-400 font-bold mb-1">獲得ポイント</p>
-                <p class="text-2xl font-black text-orange-600">
-                    {{ $user->posts_sum_earned_points ?? 0 }}<span class="text-xs font-normal ml-1">Pt</span>
+
+            {{-- 2. 制覇ラリー（ここを追加！） --}}
+            <div class="flex-1 bg-yellow-50 rounded-xl p-2 py-3 border border-yellow-100">
+                <p class="text-[10px] text-yellow-600 font-bold mb-1">制覇ラリー</p>
+                <p class="text-xl font-black text-yellow-600">
+                    {{-- コントローラーで集計した completed_rallies_count を表示 --}}
+                    {{ $user->completed_rallies_count ?? 0 }}<span class="text-[10px] font-normal ml-0.5">個</span>
+                </p>
+            </div>
+
+            {{-- 3. 獲得ポイント --}}
+            <div class="flex-1 bg-orange-50 rounded-xl p-2 py-3 border border-orange-100">
+                <p class="text-[10px] text-orange-400 font-bold mb-1">獲得ポイント</p>
+                <p class="text-xl font-black text-orange-600">
+                    {{ $user->posts_sum_earned_points ?? 0 }}<span class="text-[10px] font-normal ml-0.5">Pt</span>
                 </p>
             </div>
         </div>
+        
     </div>
 
     <div class="pb-20">

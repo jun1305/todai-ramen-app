@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
-use Illuminate\Support\Facades\Log; // エラーログ用に追加
+use Illuminate\Support\Facades\Log;
 
 class ProfileController extends Controller
 {
@@ -16,7 +16,12 @@ class ProfileController extends Controller
         if (!$user) {
             return redirect()->route('login');
         }
-        $user->loadCount('posts');
+        
+        // ▼▼▼ 修正: 制覇ラリー数（completed_rallies_count）も取得 ▼▼▼
+        $user->loadCount(['posts', 'joinedRallies as completed_rallies_count' => function ($query) {
+            $query->where('is_completed', true);
+        }]);
+        
         $user->loadSum('posts', 'earned_points');
         $posts = $user->posts()->with('shop')->latest('eaten_at')->paginate(10);
         return view('profile.index', compact('user', 'posts'));
@@ -24,9 +29,13 @@ class ProfileController extends Controller
 
     public function show($id)
     {
-        $user = User::withCount('posts')
+        // ▼▼▼ 修正: ここも同様に追加 ▼▼▼
+        $user = User::withCount(['posts', 'joinedRallies as completed_rallies_count' => function ($query) {
+                    $query->where('is_completed', true);
+                }])
                 ->withSum('posts', 'earned_points') 
                 ->findOrFail($id);
+                
         $posts = $user->posts()->with('shop')->latest('eaten_at')->paginate(10);
         return view('profile.index', compact('user', 'posts'));
     }

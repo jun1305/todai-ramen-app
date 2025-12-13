@@ -57,6 +57,7 @@
                     name="shop_name"
                     id="shop_name"
                     x-ref="input"
+                    value="{{ old('shop_name', request('shop_name')) }}"
                     placeholder="店名を入力（候補が出ます）"
                     class="w-full text-lg p-4 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 focus:bg-white transition"
                     required
@@ -135,7 +136,8 @@
                 }
             </script>
 
-            <div x-data="{ 
+            <div
+                x-data="{ 
                 score: {{ old('score', $post->score ?? 85.0) }},
                 step: 0.1, // 初期値
                 
@@ -158,17 +160,18 @@
                     if (val > 100) this.score = 100;
                     if (val < 0) this.score = 0;
                 }
-            }">
+            }"
+            >
                 <label class="block text-sm font-bold text-gray-700 mb-2">
                     点数 <span class="text-red-500">*</span>
                 </label>
 
                 <div class="bg-gray-50 p-4 rounded-xl border-2 border-gray-100">
-                    
                     {{-- ① プリセットボタン --}}
                     <div class="flex justify-between gap-1 mb-6">
                         @foreach([80, 85, 90, 95, 100] as $preset)
-                        <button type="button" 
+                        <button
+                            type="button"
                             @click="score = {{ $preset }}"
                             class="flex-1 py-2 text-sm font-bold rounded-lg border transition shadow-sm"
                             :class="parseFloat(score) === {{ $preset }} 
@@ -183,7 +186,11 @@
                     {{-- ② メイン入力エリア（数値 ＆ ±ボタン） --}}
                     <div class="flex items-center justify-center gap-4 mb-2">
                         {{-- マイナス --}}
-                        <button type="button" @click="changeScore(-step)" class="w-12 h-12 rounded-full bg-white border-2 border-gray-200 text-gray-400 hover:text-orange-500 hover:border-orange-200 font-bold text-2xl shadow-sm active:scale-95 transition flex items-center justify-center">
+                        <button
+                            type="button"
+                            @click="changeScore(-step)"
+                            class="w-12 h-12 rounded-full bg-white border-2 border-gray-200 text-gray-400 hover:text-orange-500 hover:border-orange-200 font-bold text-2xl shadow-sm active:scale-95 transition flex items-center justify-center"
+                        >
                             -
                         </button>
 
@@ -193,53 +200,79 @@
                                 type="number"
                                 name="score"
                                 x-model="score"
-                                @input="validate()" 
+                                @input="validate()"
                                 @blur="if(score === '') score = 0"
-                                {{-- ▼▼▼ 追加: e E + - を入力できないようにブロックする ▼▼▼ --}}
+                                {{--
+                                ▼▼▼
+                                追加:
+                                e
+                                E
+                                +
+                                -
+                                を入力できないようにブロックする
+                                ▼▼▼
+                                --}}
                                 @keydown="['e', 'E', '+', '-'].includes($event.key) && $event.preventDefault()"
-                                {{-- ▲▲▲ ここまで ▲▲▲ --}}
+                                {{--
+                                ▲▲▲
+                                ここまで
+                                ▲▲▲
+                                --}}
                                 min="0"
                                 max="100"
                                 :step="step"
                                 class="w-full text-center text-5xl font-black text-gray-800 bg-transparent focus:outline-none p-1"
                             />
-                            <span class="absolute top-2 right-0 text-xs text-gray-400 font-bold pointer-events-none">点</span>
+                            <span
+                                class="absolute top-2 right-0 text-xs text-gray-400 font-bold pointer-events-none"
+                                >点</span
+                            >
                         </div>
 
                         {{-- プラス --}}
-                        <button type="button" @click="changeScore(step)" class="w-12 h-12 rounded-full bg-white border-2 border-gray-200 text-gray-400 hover:text-orange-500 hover:border-orange-200 font-bold text-2xl shadow-sm active:scale-95 transition flex items-center justify-center">
+                        <button
+                            type="button"
+                            @click="changeScore(step)"
+                            class="w-12 h-12 rounded-full bg-white border-2 border-gray-200 text-gray-400 hover:text-orange-500 hover:border-orange-200 font-bold text-2xl shadow-sm active:scale-95 transition flex items-center justify-center"
+                        >
                             +
                         </button>
                     </div>
 
                     {{-- ③ スライダー（復活！） --}}
                     <div class="px-2 mb-4">
-                        <input 
-                            type="range" 
-                            x-model="score" 
-                            min="0" 
-                            max="100" 
+                        <input
+                            type="range"
+                            x-model="score"
+                            min="0"
+                            max="100"
                             :step="step"
                             class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-500"
-                        >
+                        />
                     </div>
 
                     {{-- ④ 増減幅（Step）切り替えスイッチ --}}
                     <div class="flex justify-center items-center gap-2">
-                        <span class="text-[10px] font-bold text-gray-400">増減:</span>
-                        <div class="flex bg-white rounded-lg p-1 border border-gray-200 shadow-sm">
+                        <span class="text-[10px] font-bold text-gray-400"
+                            >増減:</span
+                        >
+                        <div
+                            class="flex bg-white rounded-lg p-1 border border-gray-200 shadow-sm"
+                        >
                             @foreach([0.1, 0.5, 1] as $s)
-                            <button type="button" 
+                            <button
+                                type="button"
                                 @click="step = {{ $s }}"
                                 class="px-3 py-1 text-xs font-bold rounded transition"
-                                :class="step === {{ $s }} ? 'bg-orange-100 text-orange-600' : 'text-gray-400 hover:bg-gray-50'"
+                                :class="step === {{
+                                    $s
+                                }} ? 'bg-orange-100 text-orange-600' : 'text-gray-400 hover:bg-gray-50'"
                             >
                                 {{ $s }}
                             </button>
                             @endforeach
                         </div>
                     </div>
-
                 </div>
             </div>
 

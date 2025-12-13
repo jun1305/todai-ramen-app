@@ -63,4 +63,18 @@ class User extends Authenticatable
         return $this->hasMany(Like::class);
     }
 
+    // ▼▼▼ 追加: 自分が作成したラリー ▼▼▼
+    public function myRallies()
+    {
+        return $this->hasMany(Rally::class);
+    }
+
+    // ▼▼▼ 追加: 挑戦中のラリー ▼▼▼
+    public function joinedRallies()
+    {
+        return $this->belongsToMany(Rally::class, 'user_rallies')
+                    ->withPivot('is_completed', 'completed_at')
+                    ->withTimestamps();
+    }
+
 }

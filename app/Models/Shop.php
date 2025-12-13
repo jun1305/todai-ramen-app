@@ -18,4 +18,10 @@ class Shop extends Model
     {
         return $this->hasOne(Post::class)->latestOfMany('eaten_at');
     }
+
+    // ▼▼▼ 追加: この店が含まれているラリー ▼▼▼
+    public function rallies()
+    {
+        return $this->belongsToMany(Rally::class, 'rally_shops');
+    }
 }
