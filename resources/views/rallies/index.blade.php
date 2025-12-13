@@ -1,16 +1,14 @@
 <x-app-layout title="ラーメンラリー">
     
-<div class="bg-gray-50 min-h-screen pb-32" 
-         {{-- ▼▼▼ 修正箇所: ブラウザの記憶(sessionStorage)を使って状態を維持 ▼▼▼ --}}
+    <div class="bg-gray-50 min-h-screen pb-32" 
+         {{-- ▼▼▼ ブラウザの記憶(sessionStorage)を使って検索開閉状態を維持 ▼▼▼ --}}
          x-data="{ 
              searchOpen: sessionStorage.getItem('ramen_search_open') === 'true' || {{ request('search') ? 'true' : 'false' }}, 
              searchType: '{{ request('type', 'title') }}' 
          }"
-         {{-- 開閉するたびに状態を保存する --}}
          x-init="$watch('searchOpen', val => sessionStorage.setItem('ramen_search_open', val))">
         
-        {{-- ヘッダー --}}
-        {{-- ▼▼▼ 修正: pb-6 → pb-10 に変更して、ボタン下の余白を確保 ▼▼▼ --}}
+        {{-- ▼▼▼ ヘッダーエリア ▼▼▼ --}}
         <div class="bg-slate-900 text-white pt-6 pb-12 px-4 rounded-b-[2rem] shadow-md relative overflow-hidden z-10 transition-all duration-300"
              :class="searchOpen ? 'pb-10' : 'pb-12'"> 
             
@@ -34,13 +32,12 @@
                 </p>
 
                 {{-- 検索フォーム --}}
-                <div x-show="searchOpen" x-cloak class="mt-6 max-w-xs mx-auto"> {{-- mt-4 -> mt-6 に変更 --}}
+                <div x-show="searchOpen" x-cloak class="mt-6 max-w-xs mx-auto">
                     <form action="{{ route('rallies.index') }}" method="GET">
-                        {{-- 既存パラメータ --}}
                         @if(request('filter')) <input type="hidden" name="filter" value="{{ request('filter') }}"> @endif
                         @if(request('sort')) <input type="hidden" name="sort" value="{{ request('sort') }}"> @endif
 
-                        <div class="flex justify-center gap-2 mb-4"> {{-- mb-3 -> mb-4 に変更 --}}
+                        <div class="flex justify-center gap-2 mb-4">
                             <button type="button" @click="searchType = 'title'" 
                                 class="text-xs font-bold px-4 py-1.5 rounded-full transition border"
                                 :class="searchType === 'title' ? 'bg-orange-500 text-white border-orange-500' : 'bg-transparent text-gray-400 border-gray-600 hover:text-white'">
@@ -54,7 +51,7 @@
                             <input type="hidden" name="type" x-model="searchType">
                         </div>
                         
-                        <div class="mb-4"> {{-- mb-3 -> mb-4 に変更 --}}
+                        <div class="mb-4">
                             <input type="text" name="search" value="{{ request('search') }}" 
                                 class="w-full bg-white/10 border border-white/20 rounded-xl py-3 px-4 text-white placeholder-gray-400 focus:outline-none focus:bg-white/20 focus:border-orange-500 transition text-sm text-center"
                                 :placeholder="searchType === 'title' ? 'ラリー名を入力...' : '作成者名を入力...'">
@@ -71,50 +68,54 @@
             </div>
         </div>
 
-        {{-- コンテンツエリア --}}
+        {{-- ▼▼▼ コンテンツエリア ▼▼▼ --}}
         <div class="max-w-md mx-auto px-4 -mt-6 relative z-10">
-            
-            {{-- ▼▼▼ フィルター＆ソートエリア（ここを追加！） ▼▼▼ --}}
-            <div class="mb-6 space-y-3">
-                {{-- フィルターチップ（横スクロール） --}}
-                <div class="flex overflow-x-auto gap-2 pb-1 no-scrollbar -mx-4 px-4">
-                    @php
-                        $filters = [
-                            'all' => 'すべて',
-                            'liked' => '♥ いいね', // ← ここに追加！
-                            'not_joined' => '未参加',
-                            'active' => '挑戦中',
-                            'completed' => '制覇済'
-                        ];
-                        $currentFilter = request('filter', 'all');
-                    @endphp
-                    
-                    @foreach($filters as $key => $label)
-                    <a href="{{ request()->fullUrlWithQuery(['filter' => $key == 'all' ? null : $key, 'page' => null]) }}" 
-                       class="whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold border shadow-sm transition
-                       {{ $currentFilter == ($key == 'all' ? 'all' : $key) 
-                          ? 'bg-slate-900 text-white border-slate-900' 
-                          : 'bg-white text-gray-500 border-gray-100 hover:border-gray-300' }}">
-                        {{ $label }}
-                    </a>
-                    @endforeach
+
+            {{-- ▼▼▼ フィルター＆ソートエリア（ここが新しいデザイン！） ▼▼▼ --}}
+            <div class="mb-6 grid grid-cols-2 gap-3">
+                
+                {{-- ① 絞り込みプルダウン --}}
+                <div>
+                    <label class="block text-[10px] font-black text-orange-400 mb-1 pl-2">FILTER</label>
+                    <div class="relative group">
+                        <select onchange="location.href=this.value" class="w-full bg-white border-2 border-orange-100 text-gray-700 text-xs font-bold rounded-2xl px-3 py-3 focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100 shadow-md appearance-none transition-all cursor-pointer hover:border-orange-300">
+                            <option value="{{ request()->fullUrlWithQuery(['filter' => null]) }}" {{ request('filter') == null ? 'selected' : '' }}>すべて</option>
+                            <option value="{{ request()->fullUrlWithQuery(['filter' => 'liked']) }}" {{ request('filter') == 'liked' ? 'selected' : '' }}>❤ いいね</option>
+                            <option value="{{ request()->fullUrlWithQuery(['filter' => 'not_joined']) }}" {{ request('filter') == 'not_joined' ? 'selected' : '' }}>🔰 未参加</option>
+                            <option value="{{ request()->fullUrlWithQuery(['filter' => 'active']) }}" {{ request('filter') == 'active' ? 'selected' : '' }}>🔥 挑戦中</option>
+                            <option value="{{ request()->fullUrlWithQuery(['filter' => 'completed']) }}" {{ request('filter') == 'completed' ? 'selected' : '' }}>👑 制覇済</option>
+                        </select>
+                        {{-- 下矢印アイコン --}}
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-orange-500 group-hover:scale-110 transition-transform">
+                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                    </div>
                 </div>
 
-                {{-- 並び替えドロップダウン --}}
-                <div class="flex justify-end items-center gap-2">
-                    <span class="text-[10px] font-bold text-gray-400">並び替え:</span>
+                {{-- ② 並び替えプルダウン --}}
+                <div>
+                    <label class="block text-[10px] font-black text-orange-400 mb-1 pl-2">SORT</label>
                     <form method="GET" action="{{ route('rallies.index') }}">
-                        {{-- 現在の検索・フィルター条件を維持 --}}
                         @if(request('search')) <input type="hidden" name="search" value="{{ request('search') }}"> @endif
                         @if(request('type')) <input type="hidden" name="type" value="{{ request('type') }}"> @endif
                         @if(request('filter')) <input type="hidden" name="filter" value="{{ request('filter') }}"> @endif
 
-                        <select name="sort" onchange="this.form.submit()" class="bg-white border border-gray-200 text-gray-700 text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:border-orange-500 shadow-sm appearance-none">
-                            <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>新着順</option>
-                            <option value="popular" {{ request('sort') == 'popular' ? 'selected' : '' }}>人気順（参加者多）</option>
-                            <option value="shops_desc" {{ request('sort') == 'shops_desc' ? 'selected' : '' }}>店数が多い順</option>
-                            <option value="shops_asc" {{ request('sort') == 'shops_asc' ? 'selected' : '' }}>店数が少ない順</option>
-                        </select>
+                        <div class="relative group">
+                            <select name="sort" onchange="this.form.submit()" class="w-full bg-white border-2 border-orange-100 text-gray-700 text-xs font-bold rounded-2xl px-3 py-3 focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100 shadow-md appearance-none transition-all cursor-pointer hover:border-orange-300">
+                                <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>✨ 新着順</option>
+                                <option value="popular" {{ request('sort') == 'popular' ? 'selected' : '' }}>🙌 人気順</option>
+                                <option value="shops_desc" {{ request('sort') == 'shops_desc' ? 'selected' : '' }}>🍜 店多い順</option>
+                                <option value="shops_asc" {{ request('sort') == 'shops_asc' ? 'selected' : '' }}>🍥 店少ない順</option>
+                            </select>
+                            {{-- 下矢印アイコン --}}
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-orange-500 group-hover:scale-110 transition-transform">
+                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -144,7 +145,6 @@
                 @foreach($rallies as $rally)
                 
                 @php
-                    // (進捗計算ロジックはそのまま維持)
                     $joinedRally = $myJoinedRallies->get($rally->id);
                     $isJoined = $joinedRally ? true : false;
                     $isCompletedDB = $joinedRally ? $joinedRally->pivot->is_completed : false;
@@ -155,14 +155,12 @@
                                        ->isNotEmpty();
                     })->count();
                     $isCompleted = $isCompletedDB || ($total > 0 && $conqueredCount >= $total);
-
-                    // ▼▼▼ いいね状態 ▼▼▼
                     $isLiked = in_array($rally->id, $myLikedRallyIds);
                 @endphp
 
                 <div class="relative group"> 
                     
-                    {{-- ▼▼▼ 修正1: いいねボタンを「右上」に移動（top-4 right-4） ▼▼▼ --}}
+                    {{-- いいねボタン（右上） --}}
                     @auth
                     <button onclick="toggleLike(event, {{ $rally->id }})" id="likeBtn-{{ $rally->id }}" 
                         class="absolute top-4 right-4 p-2 rounded-full transition z-20 hover:bg-gray-50 flex items-center gap-1
@@ -177,11 +175,9 @@
 
                     <a href="{{ route('rallies.show', $rally) }}" class="block bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition relative overflow-hidden">
                         
-                        {{-- バッジ（左上に移動したり、少し下げたりしてボタンと被らないように調整） --}}
+                        {{-- バッジ --}}
                         @if($isJoined)
                             @if($isCompleted)
-                                {{-- ▼▼▼ 修正: バッジ位置調整（右上のボタンと被らないように少し下げるか、左寄せにする） --}}
-                                {{-- ここではシンプルに「タイトルの上（左側）」に移動させるのが安全です --}}
                                 <div class="mb-2">
                                     <span class="bg-yellow-400 text-yellow-900 text-[10px] font-black px-2 py-1 rounded shadow-sm inline-flex items-center gap-1">
                                         <span>👑</span> COMPLETE!
@@ -196,7 +192,7 @@
                             @endif
                         @endif
                         
-                        {{-- タイトル（右側の余白を少し増やす） --}}
+                        {{-- タイトル --}}
                         <div class="flex justify-between items-start mb-2 pr-12"> 
                             <h3 class="text-lg font-black text-gray-800 line-clamp-2 group-hover:text-orange-600 transition">
                                 {{ $rally->title }}
@@ -231,7 +227,7 @@
                                 </div>
                             </div>
 
-                            {{-- ▼▼▼ 修正: 参加人数（右下のまま、paddingを削除して端に寄せる） ▼▼▼ --}}
+                            {{-- 参加人数 --}}
                             <div class="flex items-center gap-1 text-xs font-bold text-gray-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                                     <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
@@ -263,6 +259,7 @@
                 {{ $rallies->links('vendor.pagination.ramen') }}
             </div>
         </div>
+
     @push('scripts')
     <script>
         function toggleLike(event, rallyId) {
@@ -280,7 +277,7 @@
             .then(data => {
                 const btn = document.getElementById(`likeBtn-${rallyId}`);
                 const icon = btn.querySelector('svg');
-                const countSpan = document.getElementById(`likeCount-${rallyId}`); // ← 数字の要素を取得
+                const countSpan = document.getElementById(`likeCount-${rallyId}`);
                 
                 // 色の切り替え
                 if (data.status === 'added') {
@@ -293,13 +290,13 @@
                     icon.setAttribute('fill', 'none');
                 }
 
-                // ▼▼▼ 数字を更新 ▼▼▼
+                // 数字を更新
                 countSpan.textContent = data.count;
             })
             .catch(error => console.error('Error:', error));
         }
     </script>
     @endpush    
-</div>
+    </div>
     
 </x-app-layout>
