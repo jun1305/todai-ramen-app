@@ -71,6 +71,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/rallies', [RallyController::class, 'store'])->name('rallies.store');
     Route::get('/rallies/{id}', [RallyController::class, 'show'])->name('rallies.show');
     Route::post('/rallies/{id}/join', [RallyController::class, 'join'])->name('rallies.join');
+    Route::post('/rallies/{rally}/like', [App\Http\Controllers\RallyController::class, 'toggleLike'])->name('rallies.like')->middleware('auth');
 
     // ▼ マイページ・ユーザー設定
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');

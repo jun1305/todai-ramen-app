@@ -81,6 +81,7 @@
                     @php
                         $filters = [
                             'all' => 'すべて',
+                            'liked' => '♥ いいね', // ← ここに追加！
                             'not_joined' => '未参加',
                             'active' => '挑戦中',
                             'completed' => '制覇済'
@@ -141,74 +142,105 @@
             {{-- ラリーリスト --}}
             <div class="space-y-4">
                 @foreach($rallies as $rally)
+                
                 @php
-                    $isJoined = in_array($rally->id, $myJoinedRallyIds);
-                    $total = $rally->shops_count; // withCountで取得済み
-                    $conqueredCount = $rally->shops->whereIn('id', $myConqueredShopIds)->count();
-                    $isCompleted = ($total > 0 && $conqueredCount >= $total);
+                    // (進捗計算ロジックはそのまま維持)
+                    $joinedRally = $myJoinedRallies->get($rally->id);
+                    $isJoined = $joinedRally ? true : false;
+                    $isCompletedDB = $joinedRally ? $joinedRally->pivot->is_completed : false;
+                    $total = $rally->shops_count;
+                    $conqueredCount = $rally->shops->filter(function($shop) use ($myPosts, $rally) {
+                        return $myPosts->where('shop_id', $shop->id)
+                                       ->where('eaten_at', '>=', $rally->created_at)
+                                       ->isNotEmpty();
+                    })->count();
+                    $isCompleted = $isCompletedDB || ($total > 0 && $conqueredCount >= $total);
+
+                    // ▼▼▼ いいね状態 ▼▼▼
+                    $isLiked = in_array($rally->id, $myLikedRallyIds);
                 @endphp
 
-                <a href="{{ route('rallies.show', $rally) }}" class="block bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition relative overflow-hidden group">
+                <div class="relative group"> 
                     
-                    {{-- バッジ --}}
-                    @if($isJoined)
-                        @if($isCompleted)
-                            <div class="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[10px] font-black px-3 py-1 rounded-bl-xl shadow-sm z-10 flex items-center gap-1">
-                                <span>👑</span> COMPLETE!
-                            </div>
-                        @else
-                            <div class="absolute top-0 right-0 bg-orange-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl shadow-sm z-10">
-                                挑戦中: {{ $conqueredCount }}/{{ $total }}
-                            </div>
-                        @endif
-                    @endif
-                    
-                    <div class="flex justify-between items-start mb-2 pr-16">
-                        <h3 class="text-lg font-black text-gray-800 line-clamp-2 group-hover:text-orange-600 transition">
-                            {{ $rally->title }}
-                        </h3>
-                    </div>
-                    
-                    <p class="text-xs text-gray-500 line-clamp-2 mb-4">
-                        {{ $rally->description }}
-                    </p>
-
-                    {{-- カード下部（作成者・店数・人数） --}}
-                    <div class="flex items-center justify-between border-t border-gray-50 pt-3">
+                    {{-- ▼▼▼ 修正1: いいねボタンを「右上」に移動（top-4 right-4） ▼▼▼ --}}
+                    @auth
+                    <button onclick="toggleLike(event, {{ $rally->id }})" id="likeBtn-{{ $rally->id }}" 
+                        class="absolute top-4 right-4 p-2 rounded-full transition z-20 hover:bg-gray-50 flex items-center gap-1
+                        {{ $isLiked ? 'text-pink-500' : 'text-gray-300 hover:text-pink-400' }}">
                         
-                        <div class="flex items-center gap-3">
-                            {{-- 作成者 --}}
-                            <div class="flex items-center gap-1.5">
-                                <div class="h-5 w-5 rounded-full bg-gray-100 overflow-hidden border border-gray-100">
-                                    @if($rally->creator->icon_path)
-                                        <img src="{{ asset($rally->creator->icon_path) }}" class="w-full h-full object-cover">
-                                    @else
-                                        <div class="w-full h-full flex items-center justify-center text-[8px] font-bold text-gray-400">
-                                            {{ mb_substr($rally->creator->name, 0, 1) }}
-                                        </div>
-                                    @endif
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="{{ $isLiked ? 'currentColor' : 'none' }}" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                        <span id="likeCount-{{ $rally->id }}" class="text-xs font-black">{{ $rally->likes_count }}</span>
+                    </button>
+                    @endauth
+
+                    <a href="{{ route('rallies.show', $rally) }}" class="block bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition relative overflow-hidden">
+                        
+                        {{-- バッジ（左上に移動したり、少し下げたりしてボタンと被らないように調整） --}}
+                        @if($isJoined)
+                            @if($isCompleted)
+                                {{-- ▼▼▼ 修正: バッジ位置調整（右上のボタンと被らないように少し下げるか、左寄せにする） --}}
+                                {{-- ここではシンプルに「タイトルの上（左側）」に移動させるのが安全です --}}
+                                <div class="mb-2">
+                                    <span class="bg-yellow-400 text-yellow-900 text-[10px] font-black px-2 py-1 rounded shadow-sm inline-flex items-center gap-1">
+                                        <span>👑</span> COMPLETE!
+                                    </span>
                                 </div>
-                                <span class="text-xs text-gray-400 truncate max-w-[80px]">{{ $rally->creator->name }}</span>
+                            @else
+                                <div class="mb-2">
+                                    <span class="bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">
+                                        挑戦中: {{ $conqueredCount }}/{{ $total }}
+                                    </span>
+                                </div>
+                            @endif
+                        @endif
+                        
+                        {{-- タイトル（右側の余白を少し増やす） --}}
+                        <div class="flex justify-between items-start mb-2 pr-12"> 
+                            <h3 class="text-lg font-black text-gray-800 line-clamp-2 group-hover:text-orange-600 transition">
+                                {{ $rally->title }}
+                            </h3>
+                        </div>
+                        
+                        <p class="text-xs text-gray-500 line-clamp-2 mb-4">
+                            {{ $rally->description }}
+                        </p>
+
+                        <div class="flex items-center justify-between border-t border-gray-50 pt-3">
+                            <div class="flex items-center gap-3">
+                                {{-- 作成者 --}}
+                                <div class="flex items-center gap-1.5">
+                                    <div class="h-5 w-5 rounded-full bg-gray-100 overflow-hidden border border-gray-100">
+                                        @if($rally->creator->icon_path)
+                                            <img src="{{ asset($rally->creator->icon_path) }}" class="w-full h-full object-cover">
+                                        @else
+                                            <div class="w-full h-full flex items-center justify-center text-[8px] font-bold text-gray-400">
+                                                {{ mb_substr($rally->creator->name, 0, 1) }}
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <span class="text-xs text-gray-400 truncate max-w-[80px]">{{ $rally->creator->name }}</span>
+                                </div>
+                                {{-- 店数 --}}
+                                <div class="flex items-center gap-1 text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10.496 2.132a1 1 0 00-.992 0l-7 4A1 1 0 003 8v7a1 1 0 100 2h14a1 1 0 100-2V8a1 1 0 00.496-1.868l-7-4zM6 9a1 1 0 00-1 1v3a1 1 0 102 0v-3a1 1 0 00-1-1zm3 1a1 1 0 012 0v3a1 1 0 11-2 0v-3zm5-1a1 1 0 00-1 1v3a1 1 0 102 0v-3a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                    全{{ $total }}軒
+                                </div>
                             </div>
 
-                            {{-- ▼▼▼ 修正: 店数表示に変更 ▼▼▼ --}}
-                            <div class="flex items-center gap-1 text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded">
+                            {{-- ▼▼▼ 修正: 参加人数（右下のまま、paddingを削除して端に寄せる） ▼▼▼ --}}
+                            <div class="flex items-center gap-1 text-xs font-bold text-gray-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10.496 2.132a1 1 0 00-.992 0l-7 4A1 1 0 003 8v7a1 1 0 100 2h14a1 1 0 100-2V8a1 1 0 00.496-1.868l-7-4zM6 9a1 1 0 00-1 1v3a1 1 0 102 0v-3a1 1 0 00-1-1zm3 1a1 1 0 012 0v3a1 1 0 11-2 0v-3zm5-1a1 1 0 00-1 1v3a1 1 0 102 0v-3a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
                                 </svg>
-                                全{{ $total }}軒
+                                {{ $rally->challengers_count }}人
                             </div>
                         </div>
-
-                        {{-- 参加人数 --}}
-                        <div class="flex items-center gap-1 text-xs font-bold text-gray-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
-                            </svg>
-                            {{ $rally->challengers_count }}人
-                        </div>
-                    </div>
-                </a>
+                    </a>
+                </div>
                 @endforeach
             </div>
 
@@ -231,5 +263,43 @@
                 {{ $rallies->links('vendor.pagination.ramen') }}
             </div>
         </div>
-    </div>
+    @push('scripts')
+    <script>
+        function toggleLike(event, rallyId) {
+            event.preventDefault(); 
+            event.stopPropagation(); 
+
+            fetch(`/rallies/${rallyId}/like`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                const btn = document.getElementById(`likeBtn-${rallyId}`);
+                const icon = btn.querySelector('svg');
+                const countSpan = document.getElementById(`likeCount-${rallyId}`); // ← 数字の要素を取得
+                
+                // 色の切り替え
+                if (data.status === 'added') {
+                    btn.classList.remove('text-gray-300', 'hover:text-pink-400');
+                    btn.classList.add('text-pink-500');
+                    icon.setAttribute('fill', 'currentColor');
+                } else {
+                    btn.classList.remove('text-pink-500');
+                    btn.classList.add('text-gray-300', 'hover:text-pink-400');
+                    icon.setAttribute('fill', 'none');
+                }
+
+                // ▼▼▼ 数字を更新 ▼▼▼
+                countSpan.textContent = data.count;
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+    @endpush    
+</div>
+    
 </x-app-layout>

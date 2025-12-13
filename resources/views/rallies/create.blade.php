@@ -6,8 +6,17 @@
 
     <div class="max-w-xl mx-auto p-6 pb-24">
         
-        {{-- ヘッダー --}}
-        <div class="text-center mb-8">
+    {{-- ヘッダー --}}
+        <div class="text-center mb-8 relative"> {{-- relativeを追加 --}}
+            
+            {{-- ▼▼▼ 追加: 戻るボタン（絶対配置で左上に） ▼▼▼ --}}
+            <a href="{{ route('rallies.index') }}" 
+               class="absolute left-0 top-0 text-gray-400 hover:text-gray-600 bg-gray-50 hover:bg-gray-100 p-2 rounded-full transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </a>
+
             <span class="text-4xl block mb-2">🚩</span>
             <h1 class="text-2xl font-black text-gray-800">ラリーを作る</h1>
             <p class="text-xs text-gray-500 font-bold mt-2">
@@ -31,7 +40,7 @@
                         <label class="block text-xs font-bold text-gray-500 mb-1">ラリーのタイトル</label>
                         <input type="text" name="title" value="{{ old('title') }}" 
                             class="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 font-bold focus:outline-none focus:border-slate-900 transition"
-                            placeholder="例：駒場東大前こってりツアー" required>
+                            placeholder="例：最強家系５選" required>
                     </div>
 
                     <div>

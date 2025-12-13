@@ -169,33 +169,52 @@
                  @click="openChallengers = false"
                  class="fixed inset-0 bg-black/40 backdrop-blur-sm"></div>
 
-            {{-- モーダル本体（スライドなし） --}}
-            <div x-show="openChallengers"
-                 x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="opacity-0 scale-95"
-                 x-transition:enter-end="opacity-100 scale-100"
-                 x-transition:leave="transition ease-in duration-100"
-                 x-transition:leave-start="opacity-100 scale-100"
-                 x-transition:leave-end="opacity-0 scale-95"
-                 class="relative bg-white w-full max-w-sm mx-4 rounded-3xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col">
-                
-                {{-- ヘッダー --}}
+                 {{-- ▼▼▼ モーダル（ランキング仕様に修正） ▼▼▼ --}}
+        <div x-show="openChallengers" 
+             style="display: none;" 
+             class="fixed inset-0 z-50 flex items-center justify-center">
+            
+            <div x-show="openChallengers" @click="openChallengers = false" class="fixed inset-0 bg-black/40 backdrop-blur-sm"></div>
+
+            <div x-show="openChallengers" class="relative bg-white w-full max-w-sm mx-4 rounded-3xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col">
                 <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-white">
                     <h3 class="font-bold text-gray-800 flex items-center gap-2">
-                        <span class="text-xl">🔥</span> 挑戦中のユーザー
+                        <span class="text-xl">🏆</span> 挑戦者ランキング
                     </h3>
-                    <button @click="openChallengers = false" class="p-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
+                    <button @click="openChallengers = false" class="p-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition">✕</button>
                 </div>
 
-                {{-- ユーザーリスト（スクロール可能） --}}
                 <div class="overflow-y-auto p-4 space-y-3">
-                    @forelse($rally->challengers as $challenger)
-                    <a href="{{ route('users.show', $challenger->id) }}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition">
-                        <div class="h-10 w-10 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
+                    @php
+                        $totalShops = $rally->shops->count();
+                    @endphp
+
+                    @forelse($rally->challengers as $index => $challenger)
+                        @php
+                            // ① このラリーに含まれるお店のIDリストを取得
+                            $rallyShopIds = $rally->shops->pluck('id');
+
+                            // ② ユーザーの投稿のうち「このラリーのお店」かつ「重複なし」でカウント
+                            $progressCount = $challenger->posts
+                                ->whereIn('shop_id', $rallyShopIds)
+                                ->unique('shop_id')
+                                ->count();
+                        @endphp
+
+                    <a href="{{ route('users.show', $challenger->id) }}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition border border-transparent hover:border-gray-100 relative">
+                        
+                        {{-- 順位メダル --}}
+                        @if($challenger->pivot->is_completed)
+                            <div class="absolute -top-1 -left-1 w-6 h-6 flex items-center justify-center rounded-full text-[10px] font-black border-2 border-white shadow-sm
+                                {{ $index === 0 ? 'bg-yellow-400 text-yellow-900' : 
+                                  ($index === 1 ? 'bg-gray-300 text-gray-800' : 
+                                  ($index === 2 ? 'bg-orange-300 text-orange-900' : 'bg-blue-100 text-blue-800')) }}">
+                                {{ $index + 1 }}
+                            </div>
+                        @endif
+
+                        {{-- アイコン --}}
+                        <div class="h-10 w-10 rounded-full bg-gray-100 overflow-hidden border border-gray-200 shrink-0">
                             @if($challenger->icon_path)
                                 <img src="{{ asset($challenger->icon_path) }}" class="w-full h-full object-cover">
                             @else
@@ -204,26 +223,31 @@
                                 </div>
                             @endif
                         </div>
+
+                        {{-- 名前と進捗 --}}
                         <div class="flex-1">
-                            <div class="font-bold text-gray-800 text-sm">{{ $challenger->name }}</div>
-                            <div class="text-[10px] text-gray-400">
+                            <div class="flex justify-between items-center">
+                                <div class="font-bold text-gray-800 text-sm">{{ $challenger->name }}</div>
+                                
+                                {{-- ▼▼▼ 進捗カウント表示 ▼▼▼ --}}
+                                <div class="text-xs font-black {{ $progressCount == $totalShops ? 'text-yellow-600' : 'text-orange-500' }}">
+                                    {{ $progressCount }} <span class="text-[10px] text-gray-400 font-bold">/ {{ $totalShops }}</span>
+                                </div>
+                            </div>
+
+                            <div class="text-[10px] text-gray-400 mt-0.5">
                                 @if($challenger->pivot->is_completed)
-                                    <span class="text-yellow-600 font-bold">👑 制覇済み</span>
+                                    <span class="text-yellow-600 font-bold">
+                                        👑 {{ \Carbon\Carbon::parse($challenger->pivot->completed_at)->format('Y/m/d') }} 制覇
+                                    </span>
                                 @else
-                                    挑戦中
+                                    <span class="bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">挑戦中</span>
                                 @endif
                             </div>
                         </div>
-                        <div class="text-gray-300">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                            </svg>
-                        </div>
                     </a>
                     @empty
-                    <div class="text-center py-8 text-gray-400 text-sm">
-                        まだ挑戦者はいません
-                    </div>
+                    <div class="text-center py-8 text-gray-400 text-sm">まだ挑戦者はいません</div>
                     @endforelse
                 </div>
             </div>

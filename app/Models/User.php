@@ -77,4 +77,11 @@ class User extends Authenticatable
                     ->withTimestamps();
     }
 
+    // このメソッドを追加（または修正）
+    public function likedRallies()
+    {
+        // 第2引数 'rally_likes' が超重要です！
+        return $this->belongsToMany(Rally::class, 'rally_likes', 'user_id', 'rally_id');
+    }
+
 }

@@ -33,4 +33,17 @@ class Rally extends Model
                     ->withPivot('is_completed', 'completed_at') // 中間テーブルのカラムも取得
                     ->withTimestamps();
     }
+
+    public function likes()
+    {
+        // ここも 'rally_likes' を明示的に指定します
+        return $this->belongsToMany(User::class, 'rally_likes', 'rally_id', 'user_id');
+    }
+
+    public function isLikedBy($user)
+    {
+        if (!$user) return false;
+        // 修正: ここでの likes() 呼び出しは上記のメソッドを使うのでOK
+        return $this->likes()->where('rally_likes.user_id', $user->id)->exists();
+    }
 }
