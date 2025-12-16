@@ -66,13 +66,11 @@
         </div>
 
         {{-- レビュー本文エリア --}}
-        <div class="p-8 pt-10">
+        <div class="px-4 py-8">
             <div class="relative bg-orange-50/50 p-6 rounded-2xl border border-orange-100">
                 <div class="absolute -top-3 left-6 bg-white border border-orange-100 px-3 py-1 rounded-full text-xs font-bold text-orange-500">
                     会長のレビュー
                 </div>
-                {{-- ▼▼▼ 修正：タグと変数の間の改行・スペースを削除して一行にする ▼▼▼ --}}
-                {{-- ついでに break-words を追加して、長い英語などが枠を突き抜けるのも防止 --}}
                 <p class="text-gray-800 leading-relaxed whitespace-pre-wrap font-medium text-lg break-words">{{ $post->comment }}</p>
             </div>
         </div>
