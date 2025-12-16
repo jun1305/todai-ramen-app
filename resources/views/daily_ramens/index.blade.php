@@ -125,27 +125,74 @@
     </div>
 </x-app-layout>
 
-{{-- ▼▼▼ JavaScriptを追加（bodyの閉じタグ直前などに配置されます） ▼▼▼ --}}
 <script>
-    document.addEventListener('click', function(e) {
-        // .js-calendar-nav というクラスがついたリンク（◀ ▶）が押されたら...
-        const link = e.target.closest('.js-calendar-nav');
-        if (!link) return;
-        
-        // 1. 通常の画面遷移を止める
-        e.preventDefault();
-        
-        // 2. リンク先のURL（カレンダー専用URL）を取得
-        const url = link.href;
-
-        // 3. 裏側でデータを取ってくる
+    // 共通のカレンダー更新関数
+    function updateCalendar(url) {
         fetch(url)
             .then(response => response.text())
             .then(html => {
-                // 4. カレンダー部分の中身をごっそり入れ替える
                 document.getElementById('calendar-wrapper').innerHTML = html;
             })
             .catch(error => console.error('Error:', error));
+    }
+
+    // すべてのクリックイベントをここで管理（イベント委譲）
+    document.addEventListener('click', function(e) {
+        
+        // 1. カレンダーナビ（◀ ▶）のクリック
+        const navLink = e.target.closest('.js-calendar-nav');
+        if (navLink) {
+            e.preventDefault();
+            updateCalendar(navLink.href);
+            return;
+        }
+
+        // 2. 年月選択メニューの開閉（トグルボタン）
+        const toggleBtn = e.target.closest('.js-toggle-calendar-menu');
+        if (toggleBtn) {
+            const menu = document.getElementById('calendar-menu');
+            if (menu) menu.classList.toggle('hidden');
+            return;
+        }
+
+        // 3. メニューの外側をクリックしたら閉じる
+        const menu = document.getElementById('calendar-menu');
+        if (menu && !menu.classList.contains('hidden') && !e.target.closest('#calendar-menu')) {
+            menu.classList.add('hidden');
+        }
+
+        // 4. 「年」の変更（＜ 2025年 ＞）
+        const yearBtn = e.target.closest('.js-change-year');
+        if (yearBtn) {
+            const yearSpan = document.getElementById('calendar-menu-year');
+            let currentYear = parseInt(yearSpan.dataset.year);
+            const val = parseInt(yearBtn.dataset.val);
+            
+            // 年を計算して表示とデータ属性を更新
+            currentYear += val;
+            yearSpan.dataset.year = currentYear;
+            yearSpan.textContent = currentYear + '年';
+            return;
+        }
+
+        // 5. 「月」の選択
+        const monthBtn = e.target.closest('.js-select-month');
+        if (monthBtn) {
+            const menuDiv = document.getElementById('calendar-menu');
+            const yearSpan = document.getElementById('calendar-menu-year');
+            
+            const year = yearSpan.dataset.year;
+            // 月を2桁にする（例: 1 -> 01）
+            const month = monthBtn.dataset.month.toString().padStart(2, '0');
+            
+            // data-base-url からURLを取得
+            const baseUrl = menuDiv.dataset.baseUrl;
+            const separator = baseUrl.includes('?') ? '&' : '?';
+            const url = `${baseUrl}${separator}month=${year}-${month}`;
+            
+            // カレンダー更新＆メニューを閉じる
+            updateCalendar(url);
+            menuDiv.classList.add('hidden');
+        }
     });
 </script>
-        
