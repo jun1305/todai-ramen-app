@@ -39,15 +39,24 @@ class ProfileController extends Controller
 
     public function show($id)
     {
-        // ▼▼▼ 修正: ここも同様に追加 ▼▼▼
+        // 1. ユーザー情報の取得（制覇ラリー数と投稿ポイント合計も一緒に取る）
         $user = User::withCount(['posts', 'joinedRallies as completed_rallies_count' => function ($query) {
                     $query->where('is_completed', true);
                 }])
                 ->withSum('posts', 'earned_points') 
                 ->findOrFail($id);
                 
+        // ▼▼▼ 追加: ポイント計算ロジック（indexメソッドと同じもの） ▼▼▼
+        $postPoints = $user->posts_sum_earned_points ?? 0;
+        $rallyPoints = ($user->completed_rallies_count ?? 0) * 5;
+        
+        $totalPoints = $postPoints + $rallyPoints;
+        // ▲▲▲ 追加ここまで ▲▲▲
+
         $posts = $user->posts()->with('shop')->latest('eaten_at')->paginate(10);
-        return view('profile.index', compact('user', 'posts'));
+        
+        // compact に 'totalPoints' を追加
+        return view('profile.index', compact('user', 'posts', 'totalPoints'));
     }
 
     public function updateIcon(Request $request)
