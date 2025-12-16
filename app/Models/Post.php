@@ -5,14 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-
 class Post extends Model
 {
     use HasFactory;
-    /** @use HasFactory<\Database\Factories\PostFactory> */
+    
     protected $fillable = [
         'user_id',
         'shop_id',
+        'shop_name', // 👈 ★追加！これがないと保存されません
         'score',
         'comment',
         'image_path',
@@ -21,6 +21,7 @@ class Post extends Model
 
     protected $casts = [
         'eaten_at' => 'datetime',
+        'score' => 'float', // 👈 追加: 小数として扱う（4.50 ではなく 4.5 になる）
     ];
     
     public function user()
@@ -33,13 +34,11 @@ class Post extends Model
         return $this->belongsTo(Shop::class);
     }
 
-    // いいねリレーション
     public function likes()
     {
         return $this->hasMany(Like::class);
     }
 
-    // 特定のユーザーがいいね済みかチェックする便利機能
     public function isLikedBy($user)
     {
         if (!$user) return false;

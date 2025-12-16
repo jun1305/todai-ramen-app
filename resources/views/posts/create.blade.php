@@ -31,7 +31,8 @@
             @csrf
             <div class="space-y-2">
                 <label class="block text-sm font-bold text-gray-700">
-                    ラーメンの写真
+                    {{-- ▼▼▼ 修正: * マークを追加 ▼▼▼ --}}
+                    ラーメンの写真 <span class="text-red-500">*</span>
                 </label>
                 <div class="relative">
                     <input
@@ -39,6 +40,8 @@
                         name="image"
                         id="image"
                         accept="image/*"
+                        {{-- ▼▼▼ 修正: required を追加 ▼▼▼ --}}
+                        required
                         class="block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-6 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer"
                     />
                 </div>
@@ -64,6 +67,8 @@
                     autocomplete="off"
                     @keydown.enter.prevent
                 />
+                <input type="hidden" name="google_place_id" x-ref="placeId" />
+                <input type="hidden" name="address" x-ref="address" />
                 <p class="text-xs text-gray-400">
                     ※Googleマップの候補から選んでください
                 </p>
@@ -89,22 +94,39 @@
                                         componentRestrictions: {
                                             country: "jp",
                                         },
-                                        fields: ["name"],
+                                        // ★ fields に formatted_address と place_id を追加！
+                                        fields: [
+                                            "name",
+                                            "formatted_address",
+                                            "place_id",
+                                        ],
                                     }
                                 );
 
                             autocomplete.addListener("place_changed", () => {
                                 const place = autocomplete.getPlace();
-                                console.log("Googleから届いたデータ:", place); // 確認用
 
                                 if (place.name) {
-                                    // ★ここで「住所カット手術」を行う
+                                    // 1. 隠し項目にIDと住所をセット（追加部分）
+                                    if (this.$refs.placeId) {
+                                        this.$refs.placeId.value =
+                                            place.place_id || "";
+                                    }
+                                    if (
+                                        this.$refs.address &&
+                                        place.formatted_address
+                                    ) {
+                                        // 住所のクリーニングをしてセット
+                                        this.$refs.address.value =
+                                            this.cleanAddress(
+                                                place.formatted_address
+                                            );
+                                    }
+
+                                    // 2. 店名入力欄の見た目を整える（既存の処理）
                                     const simpleName = this.cleanName(
                                         place.name
                                     );
-
-                                    console.log("整形後の名前:", simpleName); // 確認用
-
                                     setTimeout(() => {
                                         this.$refs.input.value = simpleName;
                                         this.$refs.input.dispatchEvent(
@@ -115,22 +137,21 @@
                             });
                         },
 
-                        // ★名前をきれいにする関数（強力版）
+                        // 店名整形（既存）
                         cleanName(fullName) {
-                            let name = fullName;
+                            // ... (中身は今のままでOK) ...
+                            return fullName
+                                .replace(/^日本、\s*/, "")
+                                .replace(/〒\d{3}-\d{4}\s*/, "")
+                                .replace(/^.+?[0-9０-９]+.*?\s+/, "");
+                        },
 
-                            // 1. "日本、" を削除
-                            name = name.replace(/^日本、\s*/, "");
-
-                            // 2. "〒xxx-xxxx" を削除
-                            name = name.replace(/〒\d{3}-\d{4}\s*/, "");
-
-                            // 3. 【ここが修正ポイント】 住所部分をごっそり削除
-                            // 「何か文字」+「全角半角の数字」+「その後のごちゃごちゃ(丁目とかハイフン)」+「スペース」
-                            // というパターンを見つけて、そこまでを全部消します。
-                            name = name.replace(/^.+?[0-9０-９]+.*?\s+/, "");
-
-                            return name;
+                        // ★追加：住所整形関数（Dailyと同じロジック）
+                        cleanAddress(address) {
+                            let clean = address;
+                            clean = clean.replace(/^日本、\s*/, "");
+                            clean = clean.replace(/〒\d{3}-\d{4}\s*/, "");
+                            return clean.trim();
                         },
                     };
                 }

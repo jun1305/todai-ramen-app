@@ -213,9 +213,8 @@
                     </p>
 
                     {{-- 今日の一杯 --}}
-                    {{-- リンク先は後で作ります（とりあえず #） --}}
                     <a
-                        href="#"
+                        href="{{ route('daily.index') }}"
                         class="flex items-center gap-3 px-4 py-3 mb-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl shadow-md hover:shadow-lg transition transform active:scale-95"
                     >
                         <span class="text-2xl bg-white/20 p-1.5 rounded-lg"

@@ -88,6 +88,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/campaigns', [AdminCampaignController::class, 'store'])->name('admin.campaigns.store');
     Route::delete('/admin/campaigns/{id}', [AdminCampaignController::class, 'destroy'])->name('admin.campaigns.destroy');
 
+    // ▼ 今日の一杯（会長ログ）
+    Route::get('/daily', [App\Http\Controllers\DailyRamenController::class, 'index'])->name('daily.index');
+    Route::get('/daily/create', [App\Http\Controllers\DailyRamenController::class, 'create'])->name('daily.create');
+    Route::post('/daily', [App\Http\Controllers\DailyRamenController::class, 'store'])->name('daily.store');
+    Route::get('/daily/calendar-fetch', [App\Http\Controllers\DailyRamenController::class, 'fetchCalendar'])->name('daily.fetch_calendar');
+
     // ▼ ログアウト
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });

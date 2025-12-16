@@ -36,6 +36,9 @@
                     required 
                     autocomplete="off"
                     @keydown.enter.prevent>
+
+                <input type="hidden" name="google_place_id" x-ref="placeId">
+                <input type="hidden" name="address" x-ref="address">
                 
                 <p class="text-xs text-gray-400 mt-1 ml-1">※Googleマップの候補から修正できます</p>
             </div>
@@ -155,14 +158,29 @@
             return {
                 init() {
                     if (typeof google === 'undefined') return;
+                    
                     const autocomplete = new google.maps.places.Autocomplete(this.$refs.input, {
                         types: ['establishment'],
                         componentRestrictions: { country: 'jp' },
-                        fields: ['name']
+                        // ★修正: fields に住所とIDを追加
+                        fields: ['name', 'formatted_address', 'place_id']
                     });
+
                     autocomplete.addListener('place_changed', () => {
                         const place = autocomplete.getPlace();
+                        
                         if (place.name) {
+                            // ▼▼▼ 追加: 隠し項目にセットする処理 ▼▼▼
+                            // Place ID
+                            if (this.$refs.placeId) {
+                                this.$refs.placeId.value = place.place_id || '';
+                            }
+                            // 住所
+                            if (this.$refs.address && place.formatted_address) {
+                                this.$refs.address.value = this.cleanAddress(place.formatted_address);
+                            }
+                            // ▲▲▲ 追加ここまで ▲▲▲
+
                             const simpleName = this.cleanName(place.name);
                             setTimeout(() => {
                                 this.$refs.input.value = simpleName;
@@ -171,12 +189,20 @@
                         }
                     });
                 },
+                // 店名整形（既存）
                 cleanName(fullName) {
                     let name = fullName;
                     name = name.replace(/^日本、\s*/, ''); 
                     name = name.replace(/〒\d{3}-\d{4}\s*/, ''); 
                     name = name.replace(/^.+?[0-9０-９]+.*?\s+/, '');
                     return name;
+                },
+                // ★追加: 住所整形関数
+                cleanAddress(address) {
+                    let clean = address;
+                    clean = clean.replace(/^日本、\s*/, "");
+                    clean = clean.replace(/〒\d{3}-\d{4}\s*/, "");
+                    return clean.trim();
                 }
             }
         }
