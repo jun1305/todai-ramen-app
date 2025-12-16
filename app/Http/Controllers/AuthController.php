@@ -58,8 +58,11 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        // Auth::attempt は自動的に 'name' カラムを探してくれます
-        if (Auth::attempt($credentials)) {
+        // ▼▼▼ 追加: チェックボックスの値を取得（チェックされていれば true） ▼▼▼
+        $remember = $request->boolean('remember');
+
+        // ▼▼▼ 修正: 第2引数に $remember を渡す ▼▼▼
+        if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
             return redirect('/');
         }
