@@ -154,7 +154,8 @@
             <div class="flex-1 bg-orange-50 rounded-xl p-2 py-3 border border-orange-100">
                 <p class="text-[10px] text-orange-400 font-bold mb-1">獲得ポイント</p>
                 <p class="text-xl font-black text-orange-600">
-                    {{ $user->posts_sum_earned_points ?? 0 }}<span class="text-[10px] font-normal ml-0.5">Pt</span>
+                    {{-- ▼▼▼ 修正: 計算済みの変数を表示 ▼▼▼ --}}
+                    {{ $totalPoints }}<span class="text-[10px] font-normal ml-0.5">Pt</span>
                 </p>
             </div>
         </div>

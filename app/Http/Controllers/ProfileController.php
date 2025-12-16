@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Log; 
 
 class ProfileController extends Controller
 {
@@ -17,14 +17,24 @@ class ProfileController extends Controller
             return redirect()->route('login');
         }
         
-        // ▼▼▼ 修正: 制覇ラリー数（completed_rallies_count）も取得 ▼▼▼
+        // 1. データ取得（ここはそのまま）
         $user->loadCount(['posts', 'joinedRallies as completed_rallies_count' => function ($query) {
             $query->where('is_completed', true);
         }]);
         
         $user->loadSum('posts', 'earned_points');
+
+        // ▼▼▼ 追加: ここでポイントを合算する ▼▼▼
+        $postPoints = $user->posts_sum_earned_points ?? 0; // 投稿のポイント
+        $rallyPoints = ($user->completed_rallies_count ?? 0) * 5; // ラリー制覇ボーナス（1つ5pt）
+        
+        $totalPoints = $postPoints + $rallyPoints; // 合計ポイント
+        // ▲▲▲ 追加ここまで ▲▲▲
+
         $posts = $user->posts()->with('shop')->latest('eaten_at')->paginate(10);
-        return view('profile.index', compact('user', 'posts'));
+        
+        // compactに 'totalPoints' を追加してビューに渡す
+        return view('profile.index', compact('user', 'posts', 'totalPoints'));
     }
 
     public function show($id)

@@ -105,8 +105,6 @@ class PostController extends Controller
 
         $post->earned_points = $points; 
         $post->save(); 
-        
-        \App\Models\User::find(\Illuminate\Support\Facades\Auth::id())->increment('points', $points);
 
         // 通知処理
         $users = User::where('id', '!=', Auth::id())->get();
