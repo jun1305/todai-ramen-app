@@ -29,23 +29,61 @@
             enctype="multipart/form-data"
         >
             @csrf
-            <div class="space-y-2">
+            {{-- ▼▼▼ 修正: 画像プレビュー機能 (スタイル調整版) ▼▼▼ --}}
+            <div class="space-y-2" x-data="{ imagePreview: null }">
                 <label class="block text-sm font-bold text-gray-700">
-                    {{-- ▼▼▼ 修正: * マークを追加 ▼▼▼ --}}
                     ラーメンの写真 <span class="text-red-500">*</span>
                 </label>
-                <div class="relative">
-                    <input
-                        type="file"
-                        name="image"
-                        id="image"
-                        accept="image/*"
-                        {{-- ▼▼▼ 修正: required を追加 ▼▼▼ --}}
-                        required
-                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-6 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer"
-                    />
+                
+                {{-- プレビューエリア --}}
+                {{-- aspect-video を削除し、画像があるときは高さを自動にする --}}
+                <div class="relative w-full bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 overflow-hidden hover:bg-gray-50 transition cursor-pointer group"
+                     :class="!imagePreview ? 'aspect-video' : ''"
+                     @click="document.getElementById('image').click()">
+                    
+                    {{-- 画像がある場合：プレビュー表示 --}}
+                    <template x-if="imagePreview">
+                        {{-- object-contain に変更して全体を表示 --}}
+                        <img :src="imagePreview" class="w-full h-auto max-h-[500px] object-contain mx-auto">
+                    </template>
+
+                    {{-- 画像がない場合：アップロード案内 --}}
+                    <template x-if="!imagePreview">
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 group-hover:text-orange-500 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span class="text-xs font-bold">写真をタップして選択</span>
+                        </div>
+                    </template>
+                    
+                    {{-- 画像選択後の変更案内（右下に小さく出す） --}}
+                    <template x-if="imagePreview">
+                        <div class="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] px-2 py-1 rounded-full pointer-events-none">
+                            タップして変更
+                        </div>
+                    </template>
                 </div>
+
+                {{-- 実際のファイル入力 --}}
+                <input
+                    type="file"
+                    name="image"
+                    id="image"
+                    accept="image/*"
+                    required
+                    class="hidden"
+                    @change="
+                        const file = $event.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (e) => { imagePreview = e.target.result };
+                            reader.readAsDataURL(file);
+                        }
+                    "
+                />
             </div>
+            {{-- ▲▲▲ 修正ここまで ▲▲▲ --}}
 
             <div class="space-y-2" x-data="googleAutocomplete()">
                 <label
