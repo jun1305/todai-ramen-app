@@ -1,6 +1,9 @@
 <x-app-layout title="記録を編集">
     @push('scripts')
     {{-- Google Maps API スクリプト --}}
+    <script src="https://maps.googleapis.com/maps/api/js?key={{
+            env('GOOGLE_MAPS_API_KEY')
+        }}&libraries=places&language=ja&callback=Function.prototype"></script>
     @endpush
 
     <div class="p-4">
@@ -81,4 +84,56 @@
             </button>
         </form>
     </div>
+    <script>
+        function googleAutocomplete() {
+            return {
+                init() {
+                    // Google APIがロードされるのを待つ（簡易的なリトライ）
+                    const checkGoogle = setInterval(() => {
+                        if (typeof google !== "undefined" && google.maps && google.maps.places) {
+                            clearInterval(checkGoogle);
+                            this.setupAutocomplete();
+                        }
+                    }, 100);
+                },
+                setupAutocomplete() {
+                    const autocomplete = new google.maps.places.Autocomplete(
+                        this.$refs.input,
+                        {
+                            types: ["establishment"],
+                            componentRestrictions: { country: "jp" },
+                            fields: ["name", "formatted_address", "place_id"],
+                        }
+                    );
+
+                    autocomplete.addListener("place_changed", () => {
+                        const place = autocomplete.getPlace();
+
+                        if (place.name) {
+                            // 隠しフィールドに値をセット
+                            if (this.$refs.placeId) this.$refs.placeId.value = place.place_id || "";
+                            
+                            if (this.$refs.address) {
+                                let clean = place.formatted_address || "";
+                                clean = clean.replace(/^日本、\s*/, "").replace(/〒\d{3}-\d{4}\s*/, "").trim();
+                                this.$refs.address.value = clean;
+                            }
+
+                            // 店名の見た目を整える
+                            const simpleName = place.name
+                                .replace(/^日本、\s*/, "")
+                                .replace(/〒\d{3}-\d{4}\s*/, "")
+                                .replace(/^.+?[0-9０-９]+.*?\s+/, ""); // 郵便番号などを消す
+
+                            // 入力欄に反映させる（少し待ってから）
+                            setTimeout(() => {
+                                this.$refs.input.value = simpleName;
+                                this.$refs.input.dispatchEvent(new Event("input"));
+                            }, 100);
+                        }
+                    });
+                }
+            };
+        }
+    </script>
 </x-app-layout>

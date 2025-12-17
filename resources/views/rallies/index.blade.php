@@ -28,7 +28,7 @@
                 </h1>
                 
                 <p x-show="!searchOpen" class="text-sm text-gray-300 font-bold">
-                    テーマを決めて巡ろう！<br>あなただけのラーメンクエスト。
+                    テーマを決めて巡ろう！<br>みんなのラーメンクエスト。
                 </p>
 
                 {{-- 検索フォーム --}}

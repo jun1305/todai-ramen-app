@@ -90,7 +90,9 @@
 
     {{-- Google Maps API --}}
     {{-- ※ APIキーは環境変数等で管理することを推奨します --}}
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDLZ-C2UbZhmzxdWcZfeUN4e1sZTrrTfZM&libraries=places&language=ja"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{
+            env('GOOGLE_MAPS_API_KEY')
+        }}&libraries=places&language=ja"></script>
 
     <script>
         function initAutocomplete() {

@@ -46,7 +46,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/', function () {
         $posts = Post::with(['shop', 'user', 'likes'])
             ->latest('eaten_at')
-            ->paginate(10);
+            ->paginate(20);
             
         $campaign = Campaign::latest()->first();
         
