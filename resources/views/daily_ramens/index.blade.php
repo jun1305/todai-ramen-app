@@ -143,7 +143,7 @@
         </div>
 
         {{-- レビュー本文エリア --}}
-        <div class="px-4 py-8">
+        <div class="px-4 py-8 mt-2">
             <div
                 class="relative bg-orange-50/50 p-6 rounded-2xl border border-orange-100"
             >
