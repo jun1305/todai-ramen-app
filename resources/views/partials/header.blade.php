@@ -284,8 +284,9 @@
             {{-- 3. フッター（ログアウト） --}}
             @auth
             <div class="p-4 border-t border-gray-100 bg-gray-50">
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
+                {{-- ▼▼▼ onsubmit属性を追加 ▼▼▼ --}}
+                <form action="{{ route('logout') }}" method="POST" onsubmit="return confirm('ログアウトしますか？');">
+                @csrf
                     <button
                         class="flex items-center justify-center gap-2 w-full py-3 bg-white border border-gray-200 rounded-xl text-gray-600 font-bold hover:bg-gray-100 hover:text-red-500 transition shadow-sm"
                     >

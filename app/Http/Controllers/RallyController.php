@@ -96,8 +96,9 @@ class RallyController extends Controller
         $request->validate([
             'title' => 'required|max:50',
             'description' => 'nullable|max:200',
-            'shops' => 'required|array|min:1|max:5', // 店名は配列で受け取る
-            'shops.*' => 'required|string|distinct', // 重複不可
+            'shops' => 'required|array|min:1|max:5',
+            // ▼▼▼ 修正: 配列の中の 'name' キーをチェックするように変更 ▼▼▼
+            'shops.*.name' => 'required|string', 
         ]);
 
         DB::transaction(function () use ($request) {
@@ -108,10 +109,41 @@ class RallyController extends Controller
                 'description' => $request->description,
             ]);
 
-            // 2. お店を登録（なければ作成）して紐付け
-            foreach ($request->shops as $shopName) {
-                // 名前で検索、なければ作成
-                $shop = Shop::firstOrCreate(['name' => $shopName]);
+            // 2. お店を登録（賢く検索・作成）して紐付け
+            foreach ($request->shops as $shopData) {
+                // 送られてきたデータを取り出し
+                $name = $shopData['name'];
+                $placeId = $shopData['google_place_id'] ?? null;
+                $address = $shopData['address'] ?? null;
+
+                $shop = null;
+
+                // A. Google Place ID があれば、それで検索（一番確実）
+                if ($placeId) {
+                    $shop = Shop::where('google_place_id', $placeId)->first();
+                }
+
+                // B. なければ、店名で検索
+                if (!$shop) {
+                    $shop = Shop::where('name', $name)->first();
+                }
+
+                // C. それでもなければ、新規作成（ここで住所なども保存！）
+                if (!$shop) {
+                    $shop = Shop::create([
+                        'name' => $name,
+                        'google_place_id' => $placeId,
+                        'address' => $address,
+                    ]);
+                } else {
+                    // D. 既存の店なら、足りない情報を補完してあげる（親切設計）
+                    if (empty($shop->google_place_id) && $placeId) {
+                        $shop->update([
+                            'google_place_id' => $placeId,
+                            'address' => $address ?? $shop->address,
+                        ]);
+                    }
+                }
                 
                 // 中間テーブルに登録
                 $rally->shops()->attach($shop->id);

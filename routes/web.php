@@ -13,6 +13,7 @@ use App\Http\Controllers\PushController; // ← 追加: 下でフルパスで書
 use App\Models\Post;
 use App\Models\Campaign; // ← 追加: ロジック内で使用しているため
 use App\Http\Controllers\RallyController;
+use App\Http\Controllers\DailyRamenController;
 
 /*
 |--------------------------------------------------------------------------
@@ -93,6 +94,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/daily/create', [App\Http\Controllers\DailyRamenController::class, 'create'])->name('daily.create');
     Route::post('/daily', [App\Http\Controllers\DailyRamenController::class, 'store'])->name('daily.store');
     Route::get('/daily/calendar-fetch', [App\Http\Controllers\DailyRamenController::class, 'fetchCalendar'])->name('daily.fetch_calendar');
+    Route::get('/daily/{id}/edit', [DailyRamenController::class, 'edit'])->name('daily.edit');
+    Route::put('/daily/{id}', [DailyRamenController::class, 'update'])->name('daily.update');
 
     // ▼ ログアウト
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

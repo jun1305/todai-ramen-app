@@ -9,7 +9,7 @@ use Intervention\Image\Drivers\Gd\Driver;
 use App\Models\DailyRamen; // 👈 ★ここ重要！「Daily」ではなく「DailyRamen」を使う
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
-use App\Models\Shop;
+use App\Models\Shop; 
 
 class DailyRamenController extends Controller
 {
@@ -174,5 +174,78 @@ class DailyRamenController extends Controller
         return view('daily_ramens.calendar', compact(
             'post', 'monthlyPosts', 'startOfMonth', 'prevMonth', 'nextMonth'
         ));
+    }
+
+        // ④ 編集画面（会長専用）
+    public function edit($id)
+    {
+        if (auth()->id() !== 1) abort(403);
+
+        $daily = DailyRamen::findOrFail($id);
+        return view('daily_ramens.edit', compact('daily'));
+    }
+
+    // ⑤ 更新処理（会長専用）
+    public function update(Request $request, $id)
+    {
+        if (auth()->id() !== 1) abort(403);
+
+        $request->validate([
+            'shop_name' => 'required',
+            'image' => 'nullable|image|max:10240', // 更新時は任意
+            'eaten_at' => 'required|date',
+        ]);
+
+        $daily = DailyRamen::findOrFail($id);
+
+        // 1. お店の更新（PostControllerと同じロジックで賢く）
+        $shop = null;
+        if ($request->google_place_id) {
+            $shop = Shop::where('google_place_id', $request->google_place_id)->first();
+        }
+        if (!$shop) {
+            $shop = Shop::where('name', $request->shop_name)->first();
+        }
+        if (!$shop) {
+            $shop = Shop::create([
+                'name' => $request->shop_name,
+                'address' => $request->address,
+                'google_place_id' => $request->google_place_id,
+            ]);
+        }
+
+        // 2. データの更新
+        $daily->shop_id = $shop->id;
+        $daily->shop_name = $request->shop_name;
+        $daily->menu_name = $request->menu_name;
+        $daily->comment = $request->comment;
+        $daily->eaten_at = $request->eaten_at;
+
+        // 3. 画像の差し替え（新しい画像がある場合のみ）
+        if ($request->hasFile('image')) {
+            // 古い画像を削除
+            if ($daily->image_path && file_exists(public_path($daily->image_path))) {
+                unlink(public_path($daily->image_path));
+            }
+
+            // 新しい画像を保存
+            $manager = new ImageManager(new Driver());
+            $image = $manager->read($request->file('image'));
+            $image->scale(width: 800);
+            $encoded = $image->toJpeg(quality: 80);
+            
+            $fileName = 'uploads/daily/' . Str::random(40) . '.jpg';
+            
+            if (!file_exists(public_path('uploads/daily'))) {
+                mkdir(public_path('uploads/daily'), 0777, true);
+            }
+            file_put_contents(public_path($fileName), $encoded);
+            $daily->image_path = $fileName;
+        }
+
+        $daily->save();
+
+        // 詳細ページ（その日のページ）にリダイレクト
+        return redirect()->route('daily.index', ['id' => $daily->id])->with('success', '更新しました！');
     }
 }

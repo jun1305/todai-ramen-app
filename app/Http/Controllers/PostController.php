@@ -53,10 +53,22 @@ class PostController extends Controller
         // ③ それでもなければ、新規作成する
         if (!$shop) {
             $shop = Shop::create([
+                // ▼▼▼ 修正: $name -> $validated['shop_name'] ▼▼▼
                 'name' => $validated['shop_name'],
-                'address' => $request->address, // 住所をShopsテーブルに保存
+                // ▼▼▼ 修正: $placeId -> $request->google_place_id ▼▼▼
                 'google_place_id' => $request->google_place_id,
+                // ▼▼▼ 修正: $address -> $request->address ▼▼▼
+                'address' => $request->address,
             ]);
+        } else {
+            // D. 既存の店なら、足りない情報を補完してあげる（親切設計）
+            // ▼▼▼ 修正: $placeId -> $request->google_place_id ▼▼▼
+            if (empty($shop->google_place_id) && $request->google_place_id) {
+                $shop->update([
+                    'google_place_id' => $request->google_place_id,
+                    'address' => $request->address ?? $shop->address,
+                ]);
+            }
         }
         // ▲▲▲ 修正ここまで ▲▲▲
 
