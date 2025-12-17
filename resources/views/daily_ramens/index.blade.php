@@ -152,9 +152,7 @@
                 >
                     会長のレビュー
                 </div>
-                <p class="text-gray-800 leading-relaxed whitespace-pre-wrap font-medium text-lg break-words">
-                    {{ $post->comment }}
-                </p>
+                <p class="text-gray-800 leading-relaxed whitespace-pre-wrap font-medium text-lg break-words">{{ $post->comment }}</p>
             </div>
         </div>
 
