@@ -97,16 +97,29 @@
                         </a>
 
                         <div class="text-right ml-2 shrink-0">
+                            {{-- ★追加: ビュー側でのポイント計算 --}}
+                            @php
+                                $postPoints = $user->posts_sum_earned_points ?? 0;
+                                $rallyPoints = ($user->completed_rallies_count ?? 0) * 5;
+                                $totalPoints = $postPoints + $rallyPoints;
+                            @endphp
+
                             @if($userSort === 'point')
                                 <div class="font-black text-lg text-blue-600 leading-none">
-                                    {{ number_format($user->posts_sum_earned_points ?? 0) }}<span class="text-xs font-bold ml-0.5">Pt</span>
+                                    {{ number_format($totalPoints) }}<span class="text-xs font-bold ml-0.5">Pt</span>
                                 </div>
-                                <p class="text-[10px] text-gray-400 font-bold mt-1">{{ number_format($user->posts_count) }}杯</p>
+                                <p class="text-[10px] text-gray-400 font-bold mt-1">
+                                    {{-- (内訳: 投稿+ラリー) 見える化してあげると親切かも --}}
+                                    <span class="font-normal text-[9px] ml-0.5">(投{{$postPoints}}+ラ{{$rallyPoints}})</span>
+                                </p>
                             @else
                                 <div class="font-black text-lg text-blue-600 leading-none">
                                     {{ number_format($user->posts_count) }}<span class="text-xs font-bold ml-0.5">杯</span>
                                 </div>
-                                <p class="text-[10px] text-gray-400 font-bold mt-1">{{ number_format($user->posts_sum_earned_points ?? 0) }}Pt</p>
+                                <p class="text-[10px] text-gray-400 font-bold mt-1">
+                                    {{-- ここも合計ポイントを表示 --}}
+                                    {{ number_format($totalPoints) }}Pt
+                                </p>
                             @endif
                         </div>
                     </div>

@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Notifications\NewPost; 
 use Illuminate\Support\Facades\Notification;
 use App\Models\User;
+use App\Models\Rally;
 
 class PostController extends Controller
 {
@@ -117,6 +118,20 @@ class PostController extends Controller
 
         $post->earned_points = $points; 
         $post->save(); 
+
+        // ★★★ 追加: ラリー制覇判定ロジック ★★★
+        // ① 「今回行った店」を含んでいる、かつ「自分が参加中」のラリーを取得
+        $relatedRallies = Auth::user()->joinedRallies()
+            ->whereHas('shops', function($q) use ($shop) {
+                $q->where('shops.id', $shop->id);
+            })
+            ->get();
+
+        // ② それぞれ判定を実行
+        foreach ($relatedRallies as $rally) {
+            $rally->checkAndComplete(Auth::user());
+        }
+        // ★★★ ここまで ★★★
 
         // 通知処理
         $users = User::where('id', '!=', Auth::id())->get();

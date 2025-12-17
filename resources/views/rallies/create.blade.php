@@ -146,6 +146,9 @@
                     </div>
                     @endfor
                 </div>
+                <p class="text-xs text-gray-400 mt-2 ml-1">
+                    ※空欄のままでもOK（最低1軒あれば作れます）
+                </p>
             </div>
 
             {{-- 送信ボタン --}}

@@ -45,6 +45,22 @@
                 <span>{{ $rally->challengers->count() }}人が挑戦中</span>
                 <span class="text-orange-400 ml-1">›</span>
             </button>
+
+            {{-- ▼▼▼ 追加: 削除ボタン（作成者本人のみ表示） ▼▼▼ --}}
+            @if(Auth::id() === $rally->user_id)
+                <div class="mt-4 border-t border-gray-100 pt-3 flex justify-end">
+                    <form action="{{ route('rallies.destroy', $rally->id) }}" method="POST" onsubmit="return confirm('本当にこのラリーを削除しますか？\n参加中のユーザーのデータも消えてしまいます。');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="text-xs text-gray-400 hover:text-red-600 font-bold flex items-center gap-1 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            ラリーを削除する
+                        </button>
+                    </form>
+                </div>
+            @endif
         </div>
 
         {{-- コンテンツエリア --}}

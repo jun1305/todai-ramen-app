@@ -93,11 +93,23 @@ class RallyController extends Controller
     // ③ ラリー保存処理
     public function store(Request $request)
     {
+        // ▼▼▼ 追加: バリデーション前に、名前が空欄のデータを取り除く ▼▼▼
+        $rawShops = $request->input('shops', []);
+        
+        // 名前が入っているものだけをフィルター（除外）する
+        $validShops = array_filter($rawShops, function($shop) {
+            return !empty($shop['name']);
+        });
+
+        // 配列のキー（番号）を 0, 1, 2... と綺麗に振り直して、リクエスト情報を書き換える
+        $request->merge(['shops' => array_values($validShops)]);
+        // ▲▲▲ 追加ここまで ▲▲▲
+
         $request->validate([
             'title' => 'required|max:50',
             'description' => 'nullable|max:200',
-            'shops' => 'required|array|min:1|max:5',
-            // ▼▼▼ 修正: 配列の中の 'name' キーをチェックするように変更 ▼▼▼
+            // これで「中身があるものだけ」で個数チェックされるようになります
+            'shops' => 'required|array|min:1|max:5', 
             'shops.*.name' => 'required|string', 
         ]);
 
@@ -265,4 +277,30 @@ class RallyController extends Controller
             'count' => $rally->likes()->count()
         ]);
     }
+
+        // ⑥ ラリー削除処理（追加）
+    public function destroy($id)
+    {
+        $rally = Rally::findOrFail($id);
+
+        // 作成者本人でなければ403エラー（拒否）
+        if (Auth::id() !== $rally->user_id) {
+            abort(403);
+        }
+
+        DB::transaction(function () use ($rally) {
+            // 1. 関連データの削除（中間テーブルのお掃除）
+            // これを行うことで、ユーザーの「挑戦中のラリー数」や「制覇数」が自動的に正しい値に戻ります
+            $rally->shops()->detach();       // お店との紐付け解除
+            $rally->challengers()->detach(); // 挑戦者データの削除
+            $rally->likes()->detach();       // いいねデータの削除
+
+            // 2. ラリー本体の削除
+            $rally->delete();
+        });
+
+        return redirect()->route('rallies.index')->with('success', 'ラリーを削除しました。');
+    }
+
+    
 }
