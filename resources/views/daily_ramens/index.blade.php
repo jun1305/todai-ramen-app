@@ -157,7 +157,7 @@
         </div>
 
         {{-- ▼▼▼ ナビゲーションエリア ▼▼▼ --}}
-        <div class="mt-12 bg-slate-50 border-t border-gray-200 p-4 sm:p-8">
+        <div class="mt-6 bg-slate-50 border-t border-gray-200 p-4 sm:p-8">
             {{-- 前後の記事ナビ --}}
             <div class="flex justify-between items-center mb-8">
                 @if($prevPost)
