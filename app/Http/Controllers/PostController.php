@@ -168,22 +168,35 @@ class PostController extends Controller
             'google_place_id' => 'nullable|string',
         ]);
 
-        // 1. 店の更新ロジック（storeと同じく賢く検索・作成）
-        // ※ 編集で店名を変えた場合、新しい店として扱うか、既存の店の名前を変えるかは仕様によりますが、
-        // 今回は「新しい店名なら新しい店として紐付け直す」のが安全です。
+        // 1. 店の更新ロジック（storeと同じく賢く検索・作成・補完）
         $shop = null;
+        
+        // ① Google Place ID があれば、それで探す
         if ($request->google_place_id) {
             $shop = Shop::where('google_place_id', $request->google_place_id)->first();
         }
+        
+        // ② なければ、店名で探してみる
         if (!$shop) {
             $shop = Shop::where('name', $validated['shop_name'])->first();
         }
+        
+        // ③ それでもなければ、新規作成する
         if (!$shop) {
             $shop = Shop::create([
                 'name' => $validated['shop_name'],
                 'address' => $request->address,
                 'google_place_id' => $request->google_place_id,
             ]);
+        } else {
+            // ④ 既存の店なら、足りない情報を補完してあげる（親切設計）
+            // ▼▼▼ ここを追加 ▼▼▼
+            if (empty($shop->google_place_id) && $request->google_place_id) {
+                $shop->update([
+                    'google_place_id' => $request->google_place_id,
+                    'address' => $request->address ?? $shop->address,
+                ]);
+            }
         }
 
         // 2. データのセット

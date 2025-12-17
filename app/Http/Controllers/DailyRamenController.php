@@ -200,18 +200,34 @@ class DailyRamenController extends Controller
 
         // 1. お店の更新（PostControllerと同じロジックで賢く）
         $shop = null;
+        
+        // ① Google Place ID があれば、それで探す
         if ($request->google_place_id) {
             $shop = Shop::where('google_place_id', $request->google_place_id)->first();
         }
+        
+        // ② なければ、店名で探してみる
         if (!$shop) {
             $shop = Shop::where('name', $request->shop_name)->first();
         }
+        
+        // ③ それでもなければ、新規作成する
         if (!$shop) {
             $shop = Shop::create([
                 'name' => $request->shop_name,
                 'address' => $request->address,
                 'google_place_id' => $request->google_place_id,
             ]);
+        } else {
+            // ④ 既存の店なら、足りない情報を補完してあげる（ここを追加！）
+            // ▼▼▼ 追加ここから ▼▼▼
+            if (empty($shop->google_place_id) && $request->google_place_id) {
+                $shop->update([
+                    'google_place_id' => $request->google_place_id,
+                    'address' => $request->address ?? $shop->address,
+                ]);
+            }
+            // ▲▲▲ 追加ここまで ▲▲▲
         }
 
         // 2. データの更新
