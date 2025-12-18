@@ -14,6 +14,7 @@ use App\Models\Post;
 use App\Models\Campaign; // ← 追加: ロジック内で使用しているため
 use App\Http\Controllers\RallyController;
 use App\Http\Controllers\DailyRamenController;
+use App\Models\User;
 
 /*
 |--------------------------------------------------------------------------
@@ -100,4 +101,18 @@ Route::middleware('auth')->group(function () {
 
     // ▼ ログアウト
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+});
+
+Route::get('/recalculate-scores', function () {
+    $users = User::with(['posts', 'joinedRallies'])->get();
+    
+    foreach ($users as $user) {
+        $postPoints = $user->posts->sum('earned_points');
+        $rallyPoints = $user->joinedRallies->where('pivot.is_completed', true)->count() * 5;
+        
+        $user->total_score = $postPoints + $rallyPoints;
+        $user->save();
+    }
+    
+    return '全ユーザーのスコア再計算が完了しました！';
 });

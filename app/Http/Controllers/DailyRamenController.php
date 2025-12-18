@@ -127,9 +127,9 @@ class DailyRamenController extends Controller
             $manager = new ImageManager(new Driver());
             $image = $manager->read($request->file('image'));
             $image->scale(width: 800);
-            $encoded = $image->toJpeg(quality: 80);
+            $encoded = $image->toWebp(quality: 80);
             
-            $fileName = 'uploads/daily/' . Str::random(40) . '.jpg';
+            $fileName = 'uploads/daily/' . Str::random(40) . '.Webp';
             
             if (!file_exists(public_path('uploads/daily'))) {
                 mkdir(public_path('uploads/daily'), 0777, true);
@@ -248,9 +248,9 @@ class DailyRamenController extends Controller
             $manager = new ImageManager(new Driver());
             $image = $manager->read($request->file('image'));
             $image->scale(width: 800);
-            $encoded = $image->toJpeg(quality: 80);
+            $encoded = $image->toWebp(quality: 80);
             
-            $fileName = 'uploads/daily/' . Str::random(40) . '.jpg';
+            $fileName = 'uploads/daily/' . Str::random(40) . '.Webp';
             
             if (!file_exists(public_path('uploads/daily'))) {
                 mkdir(public_path('uploads/daily'), 0777, true);

@@ -7,7 +7,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
-use Illuminate\Support\Facades\Log; 
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache; // 👈 追加！
 
 class ProfileController extends Controller
 {
@@ -17,89 +18,89 @@ class ProfileController extends Controller
             return redirect()->route('login');
         }
         
-        // 1. データ取得（ここはそのまま）
+        // ★自分のページ（index）はキャッシュせず、常に最新を表示します（ストレス防止）
+        
         $user->loadCount(['posts', 'joinedRallies as completed_rallies_count' => function ($query) {
             $query->where('is_completed', true);
         }]);
         
         $user->loadSum('posts', 'earned_points');
 
-        // ▼▼▼ 追加: ここでポイントを合算する ▼▼▼
-        $postPoints = $user->posts_sum_earned_points ?? 0; // 投稿のポイント
-        $rallyPoints = ($user->completed_rallies_count ?? 0) * 5; // ラリー制覇ボーナス（1つ5pt）
+        $postPoints = $user->posts_sum_earned_points ?? 0;
+        $rallyPoints = ($user->completed_rallies_count ?? 0) * 5;
         
-        $totalPoints = $postPoints + $rallyPoints; // 合計ポイント
-        // ▲▲▲ 追加ここまで ▲▲▲
+        $totalPoints = $postPoints + $rallyPoints;
 
         $posts = $user->posts()->with('shop')->latest('eaten_at')->paginate(10);
         
-        // compactに 'totalPoints' を追加してビューに渡す
         return view('profile.index', compact('user', 'posts', 'totalPoints'));
     }
 
     public function show($id)
     {
-        // 1. ユーザー情報の取得（制覇ラリー数と投稿ポイント合計も一緒に取る）
-        $user = User::withCount(['posts', 'joinedRallies as completed_rallies_count' => function ($query) {
+        // ==========================================
+        // ★ここを高速化（キャッシュ対応）
+        // ==========================================
+        // ユーザー情報と集計結果（重い処理）を5分間キャッシュします
+        $userCacheKey = "profile_user_{$id}";
+
+        $user = Cache::remember($userCacheKey, 60 * 5, function () use ($id) {
+            return User::withCount(['posts', 'joinedRallies as completed_rallies_count' => function ($query) {
                     $query->where('is_completed', true);
                 }])
                 ->withSum('posts', 'earned_points') 
                 ->findOrFail($id);
+        });
                 
-        // ▼▼▼ 追加: ポイント計算ロジック（indexメソッドと同じもの） ▼▼▼
+        // 計算はPHPで行うので一瞬です（キャッシュされた $user を使うのでDB負荷なし）
         $postPoints = $user->posts_sum_earned_points ?? 0;
         $rallyPoints = ($user->completed_rallies_count ?? 0) * 5;
         
         $totalPoints = $postPoints + $rallyPoints;
-        // ▲▲▲ 追加ここまで ▲▲▲
 
+        // 投稿リストもページごとにキャッシュするとさらに高速ですが、
+        // 「最新の投稿が見たい」需要が高いので、ここはあえてリアルタイム取得にします。
+        // （インデックスが効いていれば十分速いです）
         $posts = $user->posts()->with('shop')->latest('eaten_at')->paginate(10);
         
-        // compact に 'totalPoints' を追加
         return view('profile.index', compact('user', 'posts', 'totalPoints'));
     }
 
     public function updateIcon(Request $request)
     {
-        // 1. バリデーション
         $request->validate([
             'icon' => 'required|image|max:2048', 
         ]);
 
-        // エラー捕捉開始
         try {
             $user = Auth::user();
             $file = $request->file('icon');
             
-            // 2. 保存先ディレクトリ
             $dir = 'profile_icons';
             $path = public_path($dir);
 
-            // ディレクトリ作成
             if (!File::exists($path)) {
                 File::makeDirectory($path, 0755, true);
             }
 
-            // 3. 古いアイコン削除
             if ($user->icon_path && File::exists(public_path($user->icon_path))) {
                 File::delete(public_path($user->icon_path));
             }
 
-            // 4. ファイル名生成
             $fileName = time() . '_' . $user->id . '.jpg';
-
-            // 5. 画像保存（修正箇所：moveメソッドを使用するのが確実です）
             $file->move($path, $fileName);
 
-            // 6. データベース更新
-            // ★Userモデルの $fillable に 'icon_path' が必要です
             $user->icon_path = $dir . '/' . $fileName;
-            $user->save(); // update()よりsave()の方が確実な場合があります
+            $user->save();
+
+            // ▼▼▼ 追加: 更新したらキャッシュを削除する ▼▼▼
+            // これを忘れると「画像変えたのに他人の画面では古いまま」になります
+            Cache::forget("profile_user_{$user->id}");
+            // ▲▲▲ 追加ここまで ▲▲▲
 
             return response()->json(['status' => 'success']);
 
         } catch (\Exception $e) {
-            // エラーが起きたらログに残し、ブラウザにエラー内容を返す
             Log::error($e);
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
@@ -114,9 +115,12 @@ class ProfileController extends Controller
         try {
             $user = Auth::user();
             
-            // Userモデルの $fillable に 'name' があるか確認してください
             $user->name = $request->name;
             $user->save();
+
+            // ▼▼▼ 追加: 更新したらキャッシュを削除 ▼▼▼
+            Cache::forget("profile_user_{$user->id}");
+            // ▲▲▲ 追加ここまで ▲▲▲
 
             return response()->json(['status' => 'success']);
 

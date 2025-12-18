@@ -7,77 +7,90 @@ use App\Models\Rally;
 use App\Models\Shop;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class RallyController extends Controller
 {
     // ① ラリー一覧画面
     public function index(Request $request)
     {
-        $query = Rally::with(['creator', 'shops'])
-            ->withCount(['challengers', 'shops', 'likes']);
-
-        // (検索・絞り込み・ソートの処理はそのまま維持...)
-        if ($request->filled('search')) {
-            $search = $request->input('search');
-            $type = $request->input('type', 'title');
-            if ($type === 'creator') {
-                $query->whereHas('creator', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                });
-            } else {
-                $query->where('title', 'like', "%{$search}%");
-            }
-        }
-
-        if (Auth::check() && $request->filled('filter')) {
-            $filter = $request->input('filter');
-            $userId = Auth::id();
-            switch ($filter) {
-                case 'not_joined':
-                    $query->whereDoesntHave('challengers', function($q) use ($userId) {
-                        $q->where('user_id', $userId);
-                    });
-                    break;
-                case 'active':
-                    $query->whereHas('challengers', function($q) use ($userId) {
-                        $q->where('user_id', $userId)->where('is_completed', false);
-                    });
-                    break;
-                case 'completed':
-                    $query->whereHas('challengers', function($q) use ($userId) {
-                        $q->where('user_id', $userId)->where('is_completed', true);
-                    });
-                    break;
-                case 'liked':
-                    // rally_likes テーブルに自分のIDがあるものだけ抽出
-                    $query->whereHas('likes', function($q) use ($userId) {
-                        $q->where('user_id', $userId);
-                    });
-                    break;
-            }
-        }
-
+        // パラメータ取得
+        $page = $request->input('page', 1);
+        $search = $request->input('search');
+        $type = $request->input('type', 'title');
+        $filter = $request->input('filter');
         $sort = $request->input('sort', 'newest');
-        switch ($sort) {
-            case 'popular': $query->orderBy('challengers_count', 'desc'); break;
-            case 'shops_desc': $query->orderBy('shops_count', 'desc'); break;
-            case 'shops_asc': $query->orderBy('shops_count', 'asc'); break;
-            default: $query->latest(); break;
-        }
+        
+        // ★キャッシュキーの作成（検索条件やページ番号を含める）
+        // ログインユーザーによってフィルタ結果が変わる（参加中など）ので、
+        // フィルタがある場合はキャッシュしない（またはユーザーIDをキーに含める）のが安全です。
+        $userId = Auth::id();
+        $cacheKey = "rallies_index_{$page}_{$sort}_{$search}_{$type}_{$filter}_user{$userId}";
 
-        $rallies = $query->paginate(10)->appends($request->query());
+        // 5分間キャッシュ
+        $rallies = Cache::remember($cacheKey, 60 * 5, function () use ($request, $search, $type, $filter, $sort, $userId) {
+            
+            $query = Rally::with(['creator', 'shops'])
+                ->withCount(['challengers', 'shops', 'likes']);
 
+            // (検索・絞り込み・ソートの処理はそのまま...)
+            if ($request->filled('search')) {
+                if ($type === 'creator') {
+                    $query->whereHas('creator', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
+                } else {
+                    $query->where('title', 'like', "%{$search}%");
+                }
+            }
+
+            if ($userId && $request->filled('filter')) {
+                switch ($filter) {
+                    case 'not_joined':
+                        $query->whereDoesntHave('challengers', function($q) use ($userId) {
+                            $q->where('user_id', $userId);
+                        });
+                        break;
+                    case 'active':
+                        $query->whereHas('challengers', function($q) use ($userId) {
+                            $q->where('user_id', $userId)->where('is_completed', false);
+                        });
+                        break;
+                    case 'completed':
+                        $query->whereHas('challengers', function($q) use ($userId) {
+                            $q->where('user_id', $userId)->where('is_completed', true);
+                        });
+                        break;
+                    case 'liked':
+                        $query->whereHas('likes', function($q) use ($userId) {
+                            $q->where('user_id', $userId);
+                        });
+                        break;
+                }
+            }
+
+            switch ($sort) {
+                case 'popular': $query->orderBy('challengers_count', 'desc'); break;
+                case 'shops_desc': $query->orderBy('shops_count', 'desc'); break;
+                case 'shops_asc': $query->orderBy('shops_count', 'asc'); break;
+                default: $query->latest(); break;
+            }
+
+            return $query->paginate(10);
+        });
+
+        // Appendsはキャッシュの外で
+        $rallies->appends($request->query());
+
+        // ★マイデータ取得（ここは軽いのでキャッシュ不要、リアルタイム性が大事）
         $myJoinedRallies = collect();
         $myPosts = collect();
-        $myLikedRallyIds = []; // 初期化
+        $myLikedRallyIds = [];
 
         if (Auth::check()) {
             $user = Auth::user();
             $myJoinedRallies = $user->joinedRallies()->get()->keyBy('id');
             $myPosts = $user->posts()->select('shop_id', 'eaten_at')->get();
-            
-            // ▼▼▼ 修正箇所: likes() ではなく likedRallies() を使う ▼▼▼
-            // ここでエラーが出ていました。likedRallies() に変えれば直ります。
             $myLikedRallyIds = $user->likedRallies()->pluck('rallies.id')->toArray();
         }
 
@@ -165,38 +178,48 @@ class RallyController extends Controller
         return redirect()->route('rallies.index')->with('success', 'ラリーを作成しました！');
     }
 
-    // ④ ラリー詳細画面（スタンプカード）
+    // ④ ラリー詳細画面
     public function show($id)
     {
-        // 1. まずラリー本体とお店リストを取得（作成日と店IDが必要なため）
-        $rally = Rally::with('shops')->findOrFail($id);
+        // ★基本情報だけキャッシュする（5分）
+        // 参加者のリストなどが重いので、ここをキャッシュします。
+        $rallyCacheKey = "rally_show_{$id}";
         
-        $rallyCreatedAt = $rally->created_at;
-        $targetShopIds = $rally->shops->pluck('id'); // このラリーの店IDリスト
+        $rally = Cache::remember($rallyCacheKey, 60 * 5, function () use ($id) {
+            $rally = Rally::with('shops')->findOrFail($id);
+            $rallyCreatedAt = $rally->created_at;
+            $targetShopIds = $rally->shops->pluck('id');
 
-        // 2. 関連データを条件付きでロード（ここで厳密に絞り込む！）
-        $rally->load(['shops.latestPost', 'challengers' => function($q) use ($rallyCreatedAt, $targetShopIds) {
-            $q->orderByDesc('pivot_is_completed')
-              ->orderBy('pivot_completed_at')
-              ->orderByDesc('pivot_created_at')
-              // 挑戦者の投稿を取得する際、「対象店」かつ「ラリー作成日以降」に限定する
-              ->with(['posts' => function($postQ) use ($rallyCreatedAt, $targetShopIds) {
-                  $postQ->select('id', 'user_id', 'shop_id', 'eaten_at') // 必要な列だけ
-                        ->whereIn('shop_id', $targetShopIds)
-                        ->where('eaten_at', '>=', $rallyCreatedAt);
-              }]);
-        }]);
+            // 関連データのロード（重い処理）
+            $rally->load(['shops.latestPost', 'challengers' => function($q) use ($rallyCreatedAt, $targetShopIds) {
+                $q->orderByDesc('pivot_is_completed')
+                  ->orderBy('pivot_completed_at')
+                  ->orderByDesc('pivot_created_at')
+                  ->with(['posts' => function($postQ) use ($rallyCreatedAt, $targetShopIds) {
+                      $postQ->select('id', 'user_id', 'shop_id', 'eaten_at')
+                            ->whereIn('shop_id', $targetShopIds)
+                            ->where('eaten_at', '>=', $rallyCreatedAt);
+                  }]);
+            }]);
+            
+            return $rally;
+        });
         
+        // ★ここから下は「自分自身のデータ」なのでキャッシュしません（リアルタイム判定）
         $isJoined = false;
         $conqueredShopIds = [];
         $myShopImages = [];
 
         if (Auth::check()) {
             $user = Auth::user();
+            // キャッシュされた $rally を使うのでDB負荷は低いです
             $isJoined = $rally->challengers->contains($user->id);
 
             if ($isJoined) {
-                // ▼▼▼ 自分用のデータ取得（ここも同じ条件で厳密に） ▼▼▼
+                // 自分の投稿データ取得（これは毎回やる）
+                $rallyCreatedAt = $rally->created_at;
+                $targetShopIds = $rally->shops->pluck('id');
+
                 $myPosts = $user->posts()
                     ->whereIn('shop_id', $targetShopIds)
                     ->where('eaten_at', '>=', $rallyCreatedAt)
@@ -205,17 +228,17 @@ class RallyController extends Controller
 
                 $conqueredShopIds = $myPosts->pluck('shop_id')->unique()->toArray();
 
-                // 写真パスの収集
                 foreach ($myPosts as $post) {
                     if (!isset($myShopImages[$post->shop_id]) && $post->image_path) {
                         $myShopImages[$post->shop_id] = $post->image_path;
                     }
                 }
 
-                // ▼▼▼ 達成状態の同期（前回と同じロジック） ▼▼▼
+                // 達成判定（更新があればDB書き込み）
                 $totalShops = $rally->shops->count();
                 $conqueredCount = count($conqueredShopIds);
                 
+                // pivotデータ取得はキャッシュできないので直接
                 $pivot = $user->joinedRallies()->where('rally_id', $rally->id)->first()->pivot;
                 $isActuallyCompleted = ($totalShops > 0 && $conqueredCount >= $totalShops);
 
@@ -224,7 +247,8 @@ class RallyController extends Controller
                         'is_completed' => $isActuallyCompleted,
                         'completed_at' => $isActuallyCompleted ? ($pivot->completed_at ?? now()) : null, 
                     ]);
-                    $rally = $rally->fresh(['shops', 'challengers']); // リロード
+                    // ここで $rally のキャッシュを消してもいいですが、
+                    // 自分の画面上の表示は $isActuallyCompleted で制御すればOKです
                 }
             }
         }

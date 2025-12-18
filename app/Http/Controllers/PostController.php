@@ -87,10 +87,10 @@ class PostController extends Controller
             $manager = new ImageManager(new Driver());
             $image = $manager->read($request->file('image'));
             $image->scale(width: 800);
-            $encoded = $image->toJpeg(quality: 75);
+            $encoded = $image->toWebp(quality: 75);
     
             // ★修正: 保存先を 'uploads/posts/' に統一
-            $fileName = 'uploads/posts/' . Str::random(40) . '.jpg';
+            $fileName = 'uploads/posts/' . Str::random(40) . '.Webp';
             
             // ディレクトリがない場合は作成
             if (!file_exists(public_path('uploads/posts'))) {
@@ -231,10 +231,10 @@ class PostController extends Controller
             $manager = new ImageManager(new Driver());
             $image = $manager->read($request->file('image'));
             $image->scale(width: 800);
-            $encoded = $image->toJpeg(quality: 75);
+            $encoded = $image->toWebp(quality: 75);
 
             // ★修正: 保存先を 'uploads/posts/' に統一
-            $fileName = 'uploads/posts/' . Str::random(40) . '.jpg';
+            $fileName = 'uploads/posts/' . Str::random(40) . '.Webp';
             
             if (!file_exists(public_path('uploads/posts'))) {
                 mkdir(public_path('uploads/posts'), 0777, true);
