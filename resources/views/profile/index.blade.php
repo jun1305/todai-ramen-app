@@ -141,12 +141,12 @@
                 </p>
             </div>
 
-            {{-- 2. 制覇ラリー（ここを追加！） --}}
+            {{-- 2. 制覇ラリー --}}
             <div class="flex-1 bg-yellow-50 rounded-xl p-2 py-3 border border-yellow-100">
                 <p class="text-[10px] text-yellow-600 font-bold mb-1">制覇ラリー</p>
                 <p class="text-xl font-black text-yellow-600">
-                    {{-- コントローラーで集計した completed_rallies_count を表示 --}}
-                    {{ $user->completed_rallies_count ?? 0 }}<span class="text-[10px] font-normal ml-0.5">個</span>
+                    {{-- ▼▼▼ そのままOK ▼▼▼ --}}
+                    {{ number_format($user->completed_rallies_count ?? 0) }}<span class="text-[10px] font-normal ml-0.5">個</span>
                 </p>
             </div>
 
@@ -154,8 +154,8 @@
             <div class="flex-1 bg-orange-50 rounded-xl p-2 py-3 border border-orange-100">
                 <p class="text-[10px] text-orange-400 font-bold mb-1">獲得ポイント</p>
                 <p class="text-xl font-black text-orange-600">
-                    {{-- ▼▼▼ 修正: 計算済みの変数を表示 ▼▼▼ --}}
-                    {{ $totalPoints }}<span class="text-[10px] font-normal ml-0.5">Pt</span>
+                    {{-- ▼▼▼ 修正: シンプルに変数を出すだけ ▼▼▼ --}}
+                    {{ number_format($totalPoints) }}<span class="text-[10px] font-normal ml-0.5">Pt</span>
                 </p>
             </div>
         </div>

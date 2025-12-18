@@ -302,24 +302,36 @@ class RallyController extends Controller
         ]);
     }
 
-        // ⑥ ラリー削除処理（追加）
     public function destroy($id)
     {
         $rally = Rally::findOrFail($id);
 
-        // 作成者本人でなければ403エラー（拒否）
         if (Auth::id() !== $rally->user_id) {
             abort(403);
         }
 
         DB::transaction(function () use ($rally) {
-            // 1. 関連データの削除（中間テーブルのお掃除）
-            // これを行うことで、ユーザーの「挑戦中のラリー数」や「制覇数」が自動的に正しい値に戻ります
-            $rally->shops()->detach();       // お店との紐付け解除
-            $rally->challengers()->detach(); // 挑戦者データの削除
-            $rally->likes()->detach();       // いいねデータの削除
+            // ▼▼▼ 追加: 達成済みのユーザーからポイントを回収する ▼▼▼
+            
+            // 1. このラリーを達成しているユーザーのIDリストを取得
+            $completedUserIds = $rally->challengers()
+                ->wherePivot('is_completed', true)
+                ->pluck('users.id');
 
-            // 2. ラリー本体の削除
+            // 2. そのユーザーたちのスコアから 5pt 引く
+            // （whereIn を使うと、対象者が100人いても1回のSQLで済むので高速です）
+            if ($completedUserIds->isNotEmpty()) {
+                User::whereIn('id', $completedUserIds)->decrement('total_score', 5);
+            }
+            // ▲▲▲ 追加ここまで ▲▲▲
+
+
+            // 3. 関連データの削除（ここはそのまま）
+            $rally->shops()->detach();
+            $rally->challengers()->detach();
+            $rally->likes()->detach();
+
+            // 4. ラリー本体の削除
             $rally->delete();
         });
 

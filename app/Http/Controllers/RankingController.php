@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Shop;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Cache; // 👈 追加！
+// use Illuminate\Support\Facades\Cache; // キャッシュは使わないので削除してOK
 
 class RankingController extends Controller
 {
@@ -30,29 +30,38 @@ class RankingController extends Controller
         $period   = $request->input('period');
         $userSort = $request->input('user_sort');
         $shopSort = $request->input('shop_sort');
-        $userPage = $request->input('users_page', 1); // ページ番号もキーにする
-        $shopPage = $request->input('shops_page', 1);
-        
         $queryParams = $request->query();
 
-        // 共通ロジック：期間計算
-        $queryDate = match ($period) {
-            'weekly'  => Carbon::now()->startOfWeek(),
-            'monthly' => Carbon::now()->startOfMonth(),
-            'yearly'  => Carbon::now()->startOfYear(),
-            default   => null,
-        };
-
         // ==========================================
-        // 2. 部員ランキング集計（キャッシュ対応）
+        // 2. 部員ランキング集計（リアルタイム高速化版）
         // ==========================================
-        // キャッシュキー：条件ごとに一意になる名前をつける
-        $usersCacheKey = "ranking_users_{$period}_{$userSort}_page_{$userPage}";
+        
+        $userQuery = User::query();
 
-        // 60秒 * 5 = 5分間キャッシュする
-        $users = Cache::remember($usersCacheKey, 60 * 5, function () use ($queryDate, $userSort) {
-            
-            // --- ここに重い処理を閉じ込める ---
+        // ★分岐：期間が「累計(total)」かどうかでロジックを変える
+        if ($period === 'total') {
+            // ▼ A. 累計の場合：計算済みの「total_score」カラムを使う（爆速）
+            $userQuery->withCount('posts'); // 表示用に投稿数だけは数える
+
+            if ($userSort === 'count') {
+                $userQuery->orderBy('posts_count', 'desc')
+                          ->orderBy('total_score', 'desc');
+            } else {
+                // ポイント順（デフォルト）
+                $userQuery->orderBy('total_score', 'desc')
+                          ->orderBy('posts_count', 'desc');
+            }
+
+        } else {
+            // ▼ B. 期間別の場合：これまで通り範囲を指定して計算（リアルタイム）
+            $queryDate = match ($period) {
+                'weekly'  => Carbon::now()->startOfWeek(),
+                'monthly' => Carbon::now()->startOfMonth(),
+                'yearly'  => Carbon::now()->startOfYear(),
+                default   => null,
+            };
+
+            // 集計用フィルタ
             $postDateFilter = function ($q) use ($queryDate) {
                 if ($queryDate) $q->where('eaten_at', '>=', $queryDate);
             };
@@ -62,12 +71,13 @@ class RankingController extends Controller
                 if ($queryDate) $q->where('user_rallies.completed_at', '>=', $queryDate);
             };
 
-            $userQuery = User::withCount([
+            $userQuery->withCount([
                     'posts' => $postDateFilter, 
                     'joinedRallies as completed_rallies_count' => $rallyDateFilter 
                 ])
                 ->withSum(['posts' => $postDateFilter], 'earned_points');
 
+            // 計算式で並び替え
             if ($userSort === 'count') {
                 $userQuery->orderBy('posts_count', 'desc')
                           ->orderByRaw('(COALESCE(posts_sum_earned_points, 0) + (completed_rallies_count * 5)) DESC');
@@ -75,39 +85,41 @@ class RankingController extends Controller
                 $userQuery->orderByRaw('(COALESCE(posts_sum_earned_points, 0) + (completed_rallies_count * 5)) DESC')
                           ->orderBy('posts_count', 'desc');
             }
+        }
 
-            return $userQuery->paginate(10, ['*'], 'users_page');
-        });
-
-        // キャッシュから取り出した後にパラメータを付与
+        // ページネーション（ここは共通）
+        $users = $userQuery->paginate(10, ['*'], 'users_page');
         $users->appends($queryParams);
 
 
         // ==========================================
-        // 3. 人気店ランキング集計（キャッシュ対応）
+        // 3. 人気店ランキング集計
         // ==========================================
-        $shopsCacheKey = "ranking_shops_{$period}_{$shopSort}_page_{$shopPage}";
+        // 人気店ランキングは「usersテーブル」関係ないので、標準的な集計を行います
+        // （ここも期間によってフィルタリングが必要です）
+        
+        $shopQueryDate = match ($period) {
+            'weekly'  => Carbon::now()->startOfWeek(),
+            'monthly' => Carbon::now()->startOfMonth(),
+            'yearly'  => Carbon::now()->startOfYear(),
+            default   => null,
+        };
 
-        $shops = Cache::remember($shopsCacheKey, 60 * 5, function () use ($queryDate, $shopSort) {
-            
-            // --- ここに重い処理を閉じ込める ---
-            $postDateFilter = function ($q) use ($queryDate) {
-                if ($queryDate) $q->where('eaten_at', '>=', $queryDate);
-            };
-            
-            $shopQuery = Shop::withCount(['posts' => $postDateFilter])
-                ->withAvg(['posts' => $postDateFilter], 'score')
-                ->with(['latestPost']);
+        $shopDateFilter = function ($q) use ($shopQueryDate) {
+            if ($shopQueryDate) $q->where('eaten_at', '>=', $shopQueryDate);
+        };
 
-            if ($shopSort === 'score') {
-                $shopQuery->orderBy('posts_avg_score', 'desc')->orderBy('posts_count', 'desc');
-            } else {
-                $shopQuery->orderBy('posts_count', 'desc')->orderBy('posts_avg_score', 'desc');
-            }
+        $shopQuery = Shop::withCount(['posts' => $shopDateFilter])
+            ->withAvg(['posts' => $shopDateFilter], 'score')
+            ->with(['latestPost']);
 
-            return $shopQuery->paginate(10, ['*'], 'shops_page');
-        });
+        if ($shopSort === 'score') {
+            $shopQuery->orderBy('posts_avg_score', 'desc')->orderBy('posts_count', 'desc');
+        } else {
+            $shopQuery->orderBy('posts_count', 'desc')->orderBy('posts_avg_score', 'desc');
+        }
 
+        $shops = $shopQuery->paginate(10, ['*'], 'shops_page');
         $shops->appends($queryParams);
 
 

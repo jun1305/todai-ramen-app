@@ -1,6 +1,6 @@
 <x-app-layout title="ランキング">
     
-    {{-- x-data: 現在のタブ状態をURLから取得（コントローラーで保証されているので安全） --}}
+    {{-- x-data: 現在のタブ状態をURLから取得 --}}
     <div x-data="{ activeTab: '{{ request('tab') }}' }" class="pb-20 bg-gray-50 min-h-screen" x-cloak>
         
         {{-- ========================================== --}}
@@ -10,10 +10,6 @@
             <div class="p-4 space-y-4">
                 
                 {{-- ① タブ切り替えボタン --}}
-                {{-- 
-                    ★ポイント: JSで切り替えるのではなく、hrefで物理的に遷移させます。
-                    これによりURLパラメータが確実に更新され、リロードしても状態が維持されます。
-                --}}
                 <div class="flex bg-gray-100 p-1 rounded-full">
                     {{-- 部員タブ --}}
                     <a href="{{ request()->fullUrlWithQuery(['tab' => 'users']) }}"
@@ -72,10 +68,20 @@
                     @foreach($users as $index => $user)
                         @php 
                             $rank = $users->firstItem() + $index;
-                            // ポイント計算
-                            $postPoints = $user->posts_sum_earned_points ?? 0;
-                            $rallyPoints = ($user->completed_rallies_count ?? 0) * 5;
-                            $totalPoints = $postPoints + $rallyPoints;
+                            
+                            // ▼▼▼ ポイント表示ロジック（ここが重要！） ▼▼▼
+                            if (request('period') === 'total') {
+                                // 累計：usersテーブルの保存済みスコアを使う（高速）
+                                $totalPoints = $user->total_score;
+                                $showBreakdown = false; // 累計時は内訳計算をしていないので非表示
+                            } else {
+                                // 期間別：計算結果を使う
+                                $postPoints = $user->posts_sum_earned_points ?? 0;
+                                $rallyPoints = ($user->completed_rallies_count ?? 0) * 5;
+                                $totalPoints = $postPoints + $rallyPoints;
+                                $showBreakdown = true;
+                            }
+                            // ▲▲▲ ポイント表示ロジック終わり ▲▲▲
                         @endphp
                     
                         <div class="flex items-center p-4 border-b border-gray-50 last:border-none">
@@ -107,9 +113,17 @@
                                     <div class="font-black text-lg text-blue-600 leading-none">
                                         {{ number_format($totalPoints) }}<span class="text-xs font-bold ml-0.5">Pt</span>
                                     </div>
-                                    <p class="text-[10px] text-gray-400 font-bold mt-1">
-                                        <span class="font-normal text-[9px] ml-0.5">(投{{$postPoints}}+ラ{{$rallyPoints}})</span>
-                                    </p>
+                                    {{-- 内訳表示（期間別の時のみ） --}}
+                                    @if($showBreakdown)
+                                        <p class="text-[10px] text-gray-400 font-bold mt-1">
+                                            <span class="font-normal text-[9px] ml-0.5">(投{{$postPoints}}+ラ{{$rallyPoints}})</span>
+                                        </p>
+                                    @else
+                                        {{-- 累計の時は杯数だけ表示しておく --}}
+                                        <p class="text-[10px] text-gray-400 font-bold mt-1">
+                                            {{ number_format($user->posts_count) }}杯
+                                        </p>
+                                    @endif
                                 @else
                                     <div class="font-black text-lg text-blue-600 leading-none">
                                         {{ number_format($user->posts_count) }}<span class="text-xs font-bold ml-0.5">杯</span>

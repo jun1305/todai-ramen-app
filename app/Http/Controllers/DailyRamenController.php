@@ -129,7 +129,7 @@ class DailyRamenController extends Controller
             $image->scale(width: 800);
             $encoded = $image->toWebp(quality: 80);
             
-            $fileName = 'uploads/daily/' . Str::random(40) . '.Webp';
+            $fileName = 'uploads/daily/' . Str::random(40) . '.webp';
             
             if (!file_exists(public_path('uploads/daily'))) {
                 mkdir(public_path('uploads/daily'), 0777, true);
@@ -250,7 +250,7 @@ class DailyRamenController extends Controller
             $image->scale(width: 800);
             $encoded = $image->toWebp(quality: 80);
             
-            $fileName = 'uploads/daily/' . Str::random(40) . '.Webp';
+            $fileName = 'uploads/daily/' . Str::random(40) . '.webp';
             
             if (!file_exists(public_path('uploads/daily'))) {
                 mkdir(public_path('uploads/daily'), 0777, true);

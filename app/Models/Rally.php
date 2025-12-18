@@ -68,6 +68,9 @@ class Rally extends Model
                 'is_completed' => true,
                 'completed_at' => now(),
             ]);
+
+            $user->increment('total_score', 5);
+
             return true; // 新たに制覇した
         }
 
