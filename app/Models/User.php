@@ -9,11 +9,13 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use NotificationChannels\WebPush\HasPushSubscriptions;
 
+
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
     use HasPushSubscriptions;
+    
 
     /**
      * The attributes that are mass assignable.
