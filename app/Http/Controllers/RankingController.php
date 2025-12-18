@@ -99,34 +99,55 @@ class RankingController extends Controller
         $users->appends($queryParams);
 
 
-        // ==========================================
-        // 3. 人気店ランキング集計
+// ==========================================
+        // 3. 人気店ランキング集計（爆速モード対応）
         // ==========================================
         
-        $shopQueryDate = match ($period) {
-            'weekly'  => Carbon::now()->startOfWeek(),
-            'monthly' => Carbon::now()->startOfMonth(),
-            'yearly'  => Carbon::now()->startOfYear(),
-            default   => null,
-        };
+        $shopQuery = Shop::query();
+        
+        // ★分岐：期間が「累計(total)」の場合
+        if ($period === 'total') {
+            // ▼ A. 累計：カラムの数字をただ並べるだけ（最速）
+            
+            // 写真表示用に latestPost だけは取得
+            $shopQuery->with('latestPost');
 
-        $shopDateFilter = function ($q) use ($shopQueryDate) {
-            if ($shopQueryDate) $q->where('eaten_at', '>=', $shopQueryDate);
-        };
+            if ($shopSort === 'score') {
+                // 平均点順
+                $shopQuery->orderBy('posts_avg_score', 'desc')
+                          ->orderBy('posts_count', 'desc');
+            } else {
+                // 投稿数順
+                $shopQuery->orderBy('posts_count', 'desc')
+                          ->orderBy('posts_avg_score', 'desc');
+            }
 
-        $shopQuery = Shop::withCount(['posts' => $shopDateFilter])
-            ->withAvg(['posts' => $shopDateFilter], 'score')
-            ->with(['latestPost']);
-
-        if ($shopSort === 'score') {
-            $shopQuery->orderBy('posts_avg_score', 'desc')->orderBy('posts_count', 'desc');
         } else {
-            $shopQuery->orderBy('posts_count', 'desc')->orderBy('posts_avg_score', 'desc');
+            // ▼ B. 期間別：これまで通りリアルタイム集計
+            $shopQueryDate = match ($period) {
+                'weekly'  => Carbon::now()->startOfWeek(),
+                'monthly' => Carbon::now()->startOfMonth(),
+                'yearly'  => Carbon::now()->startOfYear(),
+                default   => null,
+            };
+
+            $shopDateFilter = function ($q) use ($shopQueryDate) {
+                if ($shopQueryDate) $q->where('eaten_at', '>=', $shopQueryDate);
+            };
+
+            $shopQuery->withCount(['posts' => $shopDateFilter])
+                ->withAvg(['posts' => $shopDateFilter], 'score')
+                ->with(['latestPost']);
+
+            if ($shopSort === 'score') {
+                $shopQuery->orderBy('posts_avg_score', 'desc')->orderBy('posts_count', 'desc');
+            } else {
+                $shopQuery->orderBy('posts_count', 'desc')->orderBy('posts_avg_score', 'desc');
+            }
         }
 
         $shops = $shopQuery->paginate(10, ['*'], 'shops_page');
         $shops->appends($queryParams);
-
 
         return view('ranking.index', compact('users', 'shops', 'period', 'userSort', 'shopSort'));
     }

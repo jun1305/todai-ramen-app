@@ -176,7 +176,22 @@
                 {{-- リスト表示 --}}
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     @foreach($shops as $index => $shop)
-                        @php $rank = $shops->firstItem() + $index; @endphp
+                        @php 
+                            $rank = $shops->firstItem() + $index; 
+                            
+                            // ▼▼▼ 店のスコア表示用ロジック（ここを追加・修正） ▼▼▼
+                            if (request('period') === 'total') {
+                                // 累計：カラムから直接取得
+                                $shopCount = $shop->posts_count;
+                                $shopScore = $shop->posts_avg_score;
+                            } else {
+                                // 期間別：計算結果のリレーションから取得
+                                // withCountは {リレーション名}_count、withAvgは {リレーション名}_avg_{カラム名} という名前になる
+                                $shopCount = $shop->posts_count; 
+                                $shopScore = $shop->posts_avg_score; 
+                            }
+                            // ▲▲▲ ロジック終わり ▲▲▲
+                        @endphp
 
                         <div class="flex items-center p-4 border-b border-gray-50 last:border-none">
                             {{-- 順位 --}}
@@ -185,7 +200,7 @@
                                 @else <span class="font-black text-lg text-gray-400">{{ $rank }}</span> @endif
                             </div>
 
-                            {{-- 店舗 --}}
+                            {{-- 店舗情報 --}}
                             <a href="{{ route('shops.show', $shop->id) }}" class="flex items-center flex-1 min-w-0 group">
                                 <div class="h-10 w-10 rounded-lg bg-gray-100 mr-3 shrink-0 overflow-hidden border border-gray-100 relative">
                                     @if($shop->latestPost && $shop->latestPost->image_path)
@@ -199,23 +214,27 @@
                                 <div class="truncate pr-2">
                                     <p class="font-bold text-gray-800 text-sm group-hover:text-orange-600 transition truncate">{{ $shop->name }}</p>
                                     @if(request('shop_sort') === 'score')
-                                        <p class="text-[10px] text-gray-400 mt-0.5">{{ number_format($shop->posts_count) }}件の投稿</p>
+                                        {{-- 修正: 変数を使用 --}}
+                                        <p class="text-[10px] text-gray-400 mt-0.5">{{ number_format($shopCount) }}件の投稿</p>
                                     @endif
                                 </div>
                             </a>
 
-                            {{-- スコア --}}
+                            {{-- スコア表示 --}}
                             <div class="text-right ml-2 shrink-0">
                                 @if(request('shop_sort') === 'score')
                                     <div class="font-black text-lg text-orange-600 leading-none flex items-baseline justify-end gap-0.5">
-                                        {{ number_format($shop->posts_avg_score ?? 0, 1) }}<span class="text-xs font-bold">点</span>
+                                        {{-- 修正: 変数を使用 --}}
+                                        {{ number_format($shopScore ?? 0, 1) }}<span class="text-xs font-bold">点</span>
                                     </div>
                                 @else
                                     <div class="font-black text-lg text-orange-600 leading-none">
-                                        {{ number_format($shop->posts_count) }}<span class="text-xs font-bold ml-0.5">件</span>
+                                        {{-- 修正: 変数を使用 --}}
+                                        {{ number_format($shopCount) }}<span class="text-xs font-bold ml-0.5">件</span>
                                     </div>
                                     <div class="flex justify-end text-orange-300 text-[8px] mt-1">
-                                        {{ number_format($shop->posts_avg_score ?? 0, 1) }}点
+                                        {{-- 修正: 変数を使用 --}}
+                                        {{ number_format($shopScore ?? 0, 1) }}点
                                     </div>
                                 @endif
                             </div>

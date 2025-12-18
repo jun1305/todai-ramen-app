@@ -28,120 +28,118 @@ class PostController extends Controller
     // ② 投稿を保存する
     public function store(Request $request)
     {
-        // 入力チェック（画像も追加）
         $validated = $request->validate([
-            'shop_name' => 'required',
+            'shop_name' => 'required|string|max:255', // 文字数制限追加
             'score' => 'required|numeric|min:0|max:100',
-            'comment' => 'nullable|string',
+            'comment' => 'nullable|string|max:1000', // 文字数制限追加
             'image' => 'required|image|max:10240',
-            // ▼▼▼ 追加: 住所などのバリデーション（nullableでOK） ▼▼▼
-            'address' => 'nullable|string',
-            'google_place_id' => 'nullable|string',
+            'address' => 'nullable|string|max:255',
+            'google_place_id' => 'nullable|string|max:255',
         ]);
 
-        // ▼▼▼ 修正: お店を探す・作るロジック（DailyRamenと同じ賢いロジックに統一） ▼▼▼
-        $shop = null;
+        // トランザクション開始（失敗したら全部ロールバック）
+        // post変数を外で使うために return で受け取る
+        $post = DB::transaction(function () use ($request, $validated) {
+            $user = Auth::user();
 
-        // ① Google Place ID があれば、それで探す
-        if ($request->google_place_id) {
-            $shop = Shop::where('google_place_id', $request->google_place_id)->first();
-        }
-
-        // ② なければ、店名で探してみる
-        if (!$shop) {
-            $shop = Shop::where('name', $validated['shop_name'])->first();
-        }
-
-        // ③ それでもなければ、新規作成する
-        if (!$shop) {
-            $shop = Shop::create([
-                // ▼▼▼ 修正: $name -> $validated['shop_name'] ▼▼▼
-                'name' => $validated['shop_name'],
-                // ▼▼▼ 修正: $placeId -> $request->google_place_id ▼▼▼
-                'google_place_id' => $request->google_place_id,
-                // ▼▼▼ 修正: $address -> $request->address ▼▼▼
-                'address' => $request->address,
-            ]);
-        } else {
-            // D. 既存の店なら、足りない情報を補完してあげる（親切設計）
-            // ▼▼▼ 修正: $placeId -> $request->google_place_id ▼▼▼
-            if (empty($shop->google_place_id) && $request->google_place_id) {
-                $shop->update([
+            // 1. 店舗の特定・作成ロジック
+            $shop = null;
+            if ($request->google_place_id) {
+                $shop = Shop::where('google_place_id', $request->google_place_id)->first();
+            }
+            if (!$shop) {
+                $shop = Shop::where('name', $validated['shop_name'])->first();
+            }
+            if (!$shop) {
+                $shop = Shop::create([
+                    'name' => $validated['shop_name'],
                     'google_place_id' => $request->google_place_id,
-                    'address' => $request->address ?? $shop->address,
+                    'address' => $request->address,
                 ]);
+            } else {
+                if (empty($shop->google_place_id) && $request->google_place_id) {
+                    $shop->update([
+                        'google_place_id' => $request->google_place_id,
+                        'address' => $request->address ?? $shop->address,
+                    ]);
+                }
             }
-        }
-        // ▲▲▲ 修正ここまで ▲▲▲
 
-        // 2. 投稿を保存
-        $post = new \App\Models\Post();
-        $post->shop_id = $shop->id;
-        $post->shop_name = $validated['shop_name']; // ★追加: Postsテーブルにも店名を保存
-        $post->user_id = \Illuminate\Support\Facades\Auth::id(); 
-        $post->score = $validated['score'];
-        $post->comment = $validated['comment'];
-        $post->eaten_at = now(); // またはフォームから受け取るなら $request->eaten_at
-
-        // ★★★ 画像保存処理（圧縮・リサイズ版） ★★★
-        if ($request->hasFile('image')) {
-            $manager = new ImageManager(new Driver());
-            $image = $manager->read($request->file('image'));
-            $image->scale(width: 800);
-            $encoded = $image->toWebp(quality: 75);
-    
-            // ★修正: 保存先を 'uploads/posts/' に統一
-            $fileName = 'uploads/posts/' . Str::random(40) . '.webp';
-            
-            // ディレクトリがない場合は作成
-            if (!file_exists(public_path('uploads/posts'))) {
-                mkdir(public_path('uploads/posts'), 0777, true);
+            // 2. 画像保存処理
+            // ※厳密には画像保存はDBトランザクションで戻せませんが、
+            //   失敗時に例外を投げればDB側のゴミデータは防げます。
+            $imagePath = null;
+            if ($request->hasFile('image')) {
+                $manager = new ImageManager(new Driver());
+                $image = $manager->read($request->file('image'));
+                $image->scale(width: 800);
+                $encoded = $image->toWebp(quality: 75);
+                
+                $fileName = 'uploads/posts/' . Str::random(40) . '.webp';
+                $dirPath = public_path('uploads/posts');
+                
+                if (!file_exists($dirPath)) {
+                    mkdir($dirPath, 0755, true); // 0777は危険なので0755推奨
+                }
+                
+                file_put_contents(public_path($fileName), $encoded);
+                $imagePath = $fileName;
             }
-            
-            $storagePath = public_path($fileName);
-            file_put_contents($storagePath, $encoded); 
-            $post->image_path = $fileName;
-        }
 
-        $post->save();
+            // 3. 投稿保存
+            $post = new Post();
+            $post->shop_id = $shop->id;
+            $post->shop_name = $shop->name; // バリデーション値よりShopモデルの値を優先
+            $post->user_id = $user->id;
+            $post->score = $validated['score'];
+            $post->comment = $validated['comment'];
+            $post->eaten_at = now();
+            $post->image_path = $imagePath;
+            $post->save(); // ここでID確定
 
-        // ★★★ ポイント計算 ★★★
-        $points = 1; 
+            // 4. ポイント計算
+            $points = 1; 
+            $hasCampaign = Campaign::where('shop_id', $shop->id)
+                ->where('is_active', true)
+                ->exists();
 
-        // 投稿した店でキャンペーンやってるか確認
-        $hasCampaign = Campaign::where('shop_id', $shop->id)
-            ->where('is_active', true)
-            ->exists();
+            if ($hasCampaign) {
+                $points = 2; 
+            }
 
-        if ($hasCampaign) {
-            $points = 2; 
-        }
+            $post->earned_points = $points; 
+            $post->save(); 
 
-        $post->earned_points = $points; 
-        $post->save(); 
+            // 5. ユーザースコア更新（incrementは便利ですが、モデル更新と競合しないよう注意）
+            $user->increment('total_score', $points);
+            $user->increment('posts_count');
 
-        Auth::user()->increment('total_score', $points);
-        Auth::user()->increment('posts_count');
+            // 6. 店舗スコア更新（さっき追加したやつ）
+            $shop->updateRankingData();
 
-        // ★★★ 追加: ラリー制覇判定ロジック ★★★
-        // ① 「今回行った店」を含んでいる、かつ「自分が参加中」のラリーを取得
-        $relatedRallies = Auth::user()->joinedRallies()
-            ->whereHas('shops', function($q) use ($shop) {
-                $q->where('shops.id', $shop->id);
-            })
-            ->get();
+            // 7. ラリー制覇判定
+            $relatedRallies = $user->joinedRallies()
+                ->whereHas('shops', function($q) use ($shop) {
+                    $q->where('shops.id', $shop->id);
+                })
+                ->get();
 
-        // ② それぞれ判定を実行
-        foreach ($relatedRallies as $rally) {
-            $rally->checkAndComplete(Auth::user());
-        }
-        // ★★★ ここまで ★★★
+            foreach ($relatedRallies as $rally) {
+                $rally->checkAndComplete($user);
+            }
 
-        // 通知処理
+            return $post; // トランザクションの結果としてpostを返す
+        });
+
+        // 8. 通知処理（トランザクションの外で行うのが定石）
+        // ※本当はここを「キュー（Queue）」に入れるのが正解ですが、今はこれでOK
+        // ※ユーザー数が増えたら絶対に修正が必要な箇所です
         $users = User::where('id', '!=', Auth::id())->get();
-        Notification::send($users, new NewPost($post));
+        if ($users->isNotEmpty()) {
+            Notification::send($users, new NewPost($post));
+        }
 
-        return redirect('/');
+        return redirect()->route('profile.index')->with('success', '投稿しました！');
     }
 
     public function destroy(Post $post)
@@ -170,10 +168,17 @@ class PostController extends Controller
             // ====================================================
             $user->decrement('total_score', $post->earned_points);
             $user->decrement('posts_count');
+            $shop = $post->shop;
             
-            // 投稿を削除（これで「最新の制覇状況」が変わる可能性がある）
+            // 投稿を削除
             $post->delete();
 
+            // お店のランキングデータを再計算（削除された分を反映）
+            if ($shop) {
+                $shop->updateRankingData();
+            }
+            
+            
             // ====================================================
             // 3. 削除後の再審査：コンプリート剥奪チェック
             // ====================================================
@@ -301,6 +306,10 @@ class PostController extends Controller
         }
 
         $post->save();
+
+        if ($post->shop) {
+            $post->shop->updateRankingData();
+        }
 
         return redirect()->route('profile.index')->with('success', '投稿を更新しました！');
     }

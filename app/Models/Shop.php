@@ -56,4 +56,15 @@ class Shop extends Model
         // マッチしない場合は、先頭から9文字くらいを適当に返す
         return mb_strimwidth($address, 0, 9, '...');
     }
+
+    public function updateRankingData()
+    {
+        $this->posts_count = $this->posts()->count();
+        // 投稿があれば平均を計算、なければ0
+        $this->posts_avg_score = $this->posts()->exists() 
+            ? $this->posts()->avg('score') 
+            : 0;
+        
+        $this->save();
+    }
 }
