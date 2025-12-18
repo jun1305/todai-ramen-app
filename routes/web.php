@@ -125,3 +125,22 @@ Route::get('/recalculate-scores', function () {
     
     return '件数とスコアの再計算が完了しました！';
 });
+
+Route::get('/recalculate-shop-scores', function () {
+    $shops = App\Models\Shop::with('posts')->get();
+    
+    foreach ($shops as $shop) {
+        // 1. 投稿数
+        $count = $shop->posts()->count();
+        
+        // 2. 平均点（投稿がない場合は0）
+        $avg = $count > 0 ? $shop->posts()->avg('score') : 0;
+        
+        // 3. 保存
+        $shop->posts_count = $count;
+        $shop->posts_avg_score = $avg;
+        $shop->save();
+    }
+    
+    return '店舗のスコア再計算が完了しました！';
+});

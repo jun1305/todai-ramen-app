@@ -233,8 +233,16 @@ class RallyController extends Controller
     {
         $rally = Rally::findOrFail($id);
 
+        // すでに参加していなければ参加登録
         if (!$rally->challengers->contains(Auth::id())) {
+            
+            // 1. まず参加登録
             $rally->challengers()->attach(Auth::id());
+
+            // ▼▼▼ 追加: 参加した瞬間に「過去の投稿」で条件を満たしているかチェックする ▼▼▼
+            // これがないと、あとから参加した場合に反映されません
+            $rally->checkAndComplete(Auth::user());
+            // ▲▲▲ 追加ここまで ▲▲▲
         }
 
         return back()->with('success', 'ラリーに参加しました！制覇を目指そう！');
