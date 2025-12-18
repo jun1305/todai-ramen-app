@@ -6,14 +6,13 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Shop;
 use Carbon\Carbon;
-// use Illuminate\Support\Facades\Cache; // キャッシュは使わないので削除してOK
 
 class RankingController extends Controller
 {
     public function index(Request $request)
     {
         // ==========================================
-        // 0. URLパラメータの正規化（リダイレクト処理）
+        // 0. URLパラメータの正規化
         // ==========================================
         $defaults = [
             'tab'       => 'users',
@@ -33,27 +32,35 @@ class RankingController extends Controller
         $queryParams = $request->query();
 
         // ==========================================
-        // 2. 部員ランキング集計（リアルタイム高速化版）
+        // 2. 部員ランキング集計（爆速モード）
         // ==========================================
         
         $userQuery = User::query();
 
-        // ★分岐：期間が「累計(total)」かどうかでロジックを変える
+        // ★分岐：期間が「累計(total)」の場合
+       // ★分岐：期間が「累計(total)」の場合
+        // ★分岐：期間が「累計(total)」の場合
         if ($period === 'total') {
-            // ▼ A. 累計の場合：計算済みの「total_score」カラムを使う（爆速）
-            $userQuery->withCount('posts'); // 表示用に投稿数だけは数える
+            // ▼ A. 累計：カラムの数字をただ並べるだけ（最速）
+            
+            // ★追加：内訳表示のために、投稿ポイント合計と制覇ラリー数を取得する
+            $userQuery->withSum('posts', 'earned_points');
+            $userQuery->withCount(['joinedRallies as completed_rallies_count' => function ($q) {
+                $q->where('is_completed', true);
+            }]);
 
             if ($userSort === 'count') {
+                // 杯数順（同じならスコア順）
                 $userQuery->orderBy('posts_count', 'desc')
                           ->orderBy('total_score', 'desc');
             } else {
-                // ポイント順（デフォルト）
+                // ポイント順（同じなら杯数順）
                 $userQuery->orderBy('total_score', 'desc')
                           ->orderBy('posts_count', 'desc');
             }
 
-        } else {
-            // ▼ B. 期間別の場合：これまで通り範囲を指定して計算（リアルタイム）
+        }else {
+            // ▼ B. 期間別：これまで通りリアルタイム集計（期間指定が必要なため計算必須）
             $queryDate = match ($period) {
                 'weekly'  => Carbon::now()->startOfWeek(),
                 'monthly' => Carbon::now()->startOfMonth(),
@@ -71,13 +78,14 @@ class RankingController extends Controller
                 if ($queryDate) $q->where('user_rallies.completed_at', '>=', $queryDate);
             };
 
+            // 集計実行
             $userQuery->withCount([
                     'posts' => $postDateFilter, 
                     'joinedRallies as completed_rallies_count' => $rallyDateFilter 
                 ])
                 ->withSum(['posts' => $postDateFilter], 'earned_points');
 
-            // 計算式で並び替え
+            // 計算結果でソート
             if ($userSort === 'count') {
                 $userQuery->orderBy('posts_count', 'desc')
                           ->orderByRaw('(COALESCE(posts_sum_earned_points, 0) + (completed_rallies_count * 5)) DESC');
@@ -87,7 +95,6 @@ class RankingController extends Controller
             }
         }
 
-        // ページネーション（ここは共通）
         $users = $userQuery->paginate(10, ['*'], 'users_page');
         $users->appends($queryParams);
 
@@ -95,8 +102,6 @@ class RankingController extends Controller
         // ==========================================
         // 3. 人気店ランキング集計
         // ==========================================
-        // 人気店ランキングは「usersテーブル」関係ないので、標準的な集計を行います
-        // （ここも期間によってフィルタリングが必要です）
         
         $shopQueryDate = match ($period) {
             'weekly'  => Carbon::now()->startOfWeek(),

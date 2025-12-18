@@ -70,6 +70,7 @@ class Rally extends Model
             ]);
 
             $user->increment('total_score', 5);
+            $user->increment('completed_rallies_count');
 
             return true; // 新たに制覇した
         }

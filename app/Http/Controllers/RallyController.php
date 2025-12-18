@@ -322,6 +322,7 @@ class RallyController extends Controller
             // （whereIn を使うと、対象者が100人いても1回のSQLで済むので高速です）
             if ($completedUserIds->isNotEmpty()) {
                 User::whereIn('id', $completedUserIds)->decrement('total_score', 5);
+                User::whereIn('id', $completedUserIds)->decrement('completed_rallies_count');
             }
             // ▲▲▲ 追加ここまで ▲▲▲
 

@@ -66,23 +66,29 @@
                 {{-- リスト表示 --}}
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     @foreach($users as $index => $user)
-                        @php 
-                            $rank = $users->firstItem() + $index;
-                            
-                            // ▼▼▼ ポイント表示ロジック（ここが重要！） ▼▼▼
-                            if (request('period') === 'total') {
-                                // 累計：usersテーブルの保存済みスコアを使う（高速）
-                                $totalPoints = $user->total_score;
-                                $showBreakdown = false; // 累計時は内訳計算をしていないので非表示
-                            } else {
-                                // 期間別：計算結果を使う
-                                $postPoints = $user->posts_sum_earned_points ?? 0;
-                                $rallyPoints = ($user->completed_rallies_count ?? 0) * 5;
-                                $totalPoints = $postPoints + $rallyPoints;
-                                $showBreakdown = true;
-                            }
-                            // ▲▲▲ ポイント表示ロジック終わり ▲▲▲
-                        @endphp
+                    @php 
+                        $rank = $users->firstItem() + $index;
+    
+                        // ▼▼▼ ポイント表示ロジック（修正版） ▼▼▼
+    
+                        // 1. 内訳データの取得（コントローラーで取得済み）
+                        $postPoints = $user->posts_sum_earned_points ?? 0;
+                        $rallyPoints = ($user->completed_rallies_count ?? 0) * 5;
+    
+                        // 2. 合計点の決定
+                        if (request('period') === 'total') {
+                            // 累計：合計点はカラムから（高速）、内訳は計算結果から
+                            $totalPoints = $user->total_score;
+                        } else {
+                            // 期間別：合計点も計算結果から
+                            $totalPoints = $postPoints + $rallyPoints;
+                        }
+
+                        // 3. 内訳表示フラグ（常に表示したいなら true）
+                        $showBreakdown = true; 
+    
+                        // ▲▲▲ ポイント表示ロジック終わり ▲▲▲
+                    @endphp
                     
                         <div class="flex items-center p-4 border-b border-gray-50 last:border-none">
                             {{-- 順位 --}}

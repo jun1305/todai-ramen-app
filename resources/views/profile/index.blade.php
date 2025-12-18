@@ -137,7 +137,8 @@
             <div class="flex-1 bg-gray-50 rounded-xl p-2 py-3 border border-gray-100">
                 <p class="text-[10px] text-gray-400 font-bold mb-1">食べた杯数</p>
                 <p class="text-xl font-black text-gray-800">
-                    {{ $user->posts_count }}<span class="text-[10px] font-normal ml-0.5">杯</span>
+                    {{-- カラムから直接表示 --}}
+                    {{ number_format($user->posts_count) }}<span class="text-[10px] font-normal ml-0.5">杯</span>
                 </p>
             </div>
 
@@ -145,8 +146,8 @@
             <div class="flex-1 bg-yellow-50 rounded-xl p-2 py-3 border border-yellow-100">
                 <p class="text-[10px] text-yellow-600 font-bold mb-1">制覇ラリー</p>
                 <p class="text-xl font-black text-yellow-600">
-                    {{-- ▼▼▼ そのままOK ▼▼▼ --}}
-                    {{ number_format($user->completed_rallies_count ?? 0) }}<span class="text-[10px] font-normal ml-0.5">個</span>
+                    {{-- カラムから直接表示 --}}
+                    {{ number_format($user->completed_rallies_count) }}<span class="text-[10px] font-normal ml-0.5">個</span>
                 </p>
             </div>
 
@@ -154,8 +155,8 @@
             <div class="flex-1 bg-orange-50 rounded-xl p-2 py-3 border border-orange-100">
                 <p class="text-[10px] text-orange-400 font-bold mb-1">獲得ポイント</p>
                 <p class="text-xl font-black text-orange-600">
-                    {{-- ▼▼▼ 修正: シンプルに変数を出すだけ ▼▼▼ --}}
-                    {{ number_format($totalPoints) }}<span class="text-[10px] font-normal ml-0.5">Pt</span>
+                    {{-- ▼▼▼ 修正: 変数 $totalPoints ではなく、カラムを直接読む ▼▼▼ --}}
+                    {{ number_format($user->total_score) }}<span class="text-[10px] font-normal ml-0.5">Pt</span>
                 </p>
             </div>
         </div>

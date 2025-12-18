@@ -7,54 +7,36 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
-// Cacheファサードは不要になったので削除してOK
 
 class ProfileController extends Controller
 {
     public function index() {
         $user = Auth::user();
-        if (!$user) {
-            return redirect()->route('login');
-        }
+        if (!$user) return redirect()->route('login');
         
-        // 1. カウント情報の取得
-        // 投稿数(posts_count)と、制覇ラリー数(completed_rallies_count)を取得
-        $user->loadCount([
-            'posts', 
-            'joinedRallies as completed_rallies_count' => function ($query) {
-                $query->where('is_completed', true);
-            }
-        ]);
-        
-        // 2. 合計ポイントの取得
-        // ★計算不要！カラムから直接取得（爆速）
-        $totalPoints = $user->total_score;
-
-        // 3. 投稿リスト取得
+        // 変数 $totalPoints の作成を削除！
+    
         $posts = $user->posts()->with('shop')->latest('eaten_at')->paginate(10);
         
-        return view('profile.index', compact('user', 'posts', 'totalPoints'));
+        // compact から 'totalPoints' を削除
+        return view('profile.index', compact('user', 'posts'));
     }
 
     public function show($id)
     {
-        // 他人のプロフィール表示
-        // キャッシュを使わずとも、インデックスが効いていれば十分高速です
+        // ==========================================
+        // ★ここも爆速化
+        // ==========================================
+        // withCount も不要です！
+        // findOrFail するだけで、保存済みのカウント情報も全部取れます。
         
-        $user = User::withCount([
-                'posts', 
-                'joinedRallies as completed_rallies_count' => function ($query) {
-                    $query->where('is_completed', true);
-                }
-            ])
-            ->findOrFail($id);
+        $user = User::findOrFail($id);
                 
-        // ★ここもカラムから直接取得
-        $totalPoints = $user->total_score;
+        
 
         $posts = $user->posts()->with('shop')->latest('eaten_at')->paginate(10);
         
-        return view('profile.index', compact('user', 'posts', 'totalPoints'));
+        return view('profile.index', compact('user', 'posts'));
     }
 
     public function updateIcon(Request $request)
@@ -84,8 +66,6 @@ class ProfileController extends Controller
             $user->icon_path = $dir . '/' . $fileName;
             $user->save();
 
-            // ★キャッシュを使っていないので、削除処理(forget)も不要！
-            
             return response()->json(['status' => 'success']);
 
         } catch (\Exception $e) {
@@ -105,8 +85,6 @@ class ProfileController extends Controller
             
             $user->name = $request->name;
             $user->save();
-
-            // ★キャッシュを使っていないので、削除処理(forget)も不要！
 
             return response()->json(['status' => 'success']);
 

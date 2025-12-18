@@ -120,6 +120,7 @@ class PostController extends Controller
         $post->save(); 
 
         Auth::user()->increment('total_score', $points);
+        Auth::user()->increment('posts_count');
 
         // ★★★ 追加: ラリー制覇判定ロジック ★★★
         // ① 「今回行った店」を含んでいる、かつ「自分が参加中」のラリーを取得
@@ -154,6 +155,7 @@ class PostController extends Controller
         }
 
         $post->user->decrement('total_score', $post->earned_points);
+        $post->user->decrement('posts_count');
     
         $post->delete();
     
