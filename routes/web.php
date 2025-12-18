@@ -104,15 +104,24 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/recalculate-scores', function () {
-    $users = User::with(['posts', 'joinedRallies'])->get();
+    $users = App\Models\User::with(['posts', 'joinedRallies'])->get(); // posts も必要
     
     foreach ($users as $user) {
-        $postPoints = $user->posts->sum('earned_points');
-        $rallyPoints = $user->joinedRallies->where('pivot.is_completed', true)->count() * 5;
+        // 1. 各種カウント
+        $postCount = $user->posts()->count();
+        $rallyCount = $user->joinedRallies()->wherePivot('is_completed', true)->count();
         
+        // 2. ポイント計算
+        $postPoints = $user->posts()->sum('earned_points');
+        $rallyPoints = $rallyCount * 5;
+        
+        // 3. まとめて保存
+        $user->posts_count = $postCount;
+        $user->completed_rallies_count = $rallyCount;
         $user->total_score = $postPoints + $rallyPoints;
+        
         $user->save();
     }
     
-    return '全ユーザーのスコア再計算が完了しました！';
+    return '件数とスコアの再計算が完了しました！';
 });
