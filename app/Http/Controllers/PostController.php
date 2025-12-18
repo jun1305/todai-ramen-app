@@ -15,6 +15,7 @@ use App\Notifications\NewPost;
 use Illuminate\Support\Facades\Notification;
 use App\Models\User;
 use App\Models\Rally;
+use Illuminate\Support\Facades\DB;
 
 class PostController extends Controller
 {
@@ -145,21 +146,68 @@ class PostController extends Controller
 
     public function destroy(Post $post)
     {
-        if (auth()->id() !== $post->user_id) {
+        if (Auth::id() !== $post->user_id) {
             abort(403);
         }
-    
-        // 画像があれば削除
-        if ($post->image_path && file_exists(public_path($post->image_path))) {
-            unlink(public_path($post->image_path));
-        }
 
-        $post->user->decrement('total_score', $post->earned_points);
-        $post->user->decrement('posts_count');
-    
-        $post->delete();
-    
-        return back(); 
+        DB::transaction(function () use ($post) {
+            $user = $post->user;
+
+            // ====================================================
+            // 1. 削除前の準備：影響を受けるかもしれない「達成済みラリー」を特定
+            // ====================================================
+            // 「この店を含んでいる」かつ「達成済み」のラリーをリストアップ
+            $potentiallyAffectedRallies = $user->joinedRallies()
+                ->wherePivot('is_completed', true)
+                ->whereHas('shops', function($q) use ($post) {
+                    $q->where('shops.id', $post->shop_id);
+                })
+                ->with('shops') // 店の総数を知るためロード
+                ->get();
+
+            // ====================================================
+            // 2. 投稿自体の削除処理（ポイント・杯数回収）
+            // ====================================================
+            $user->decrement('total_score', $post->earned_points);
+            $user->decrement('posts_count');
+            
+            // 投稿を削除（これで「最新の制覇状況」が変わる可能性がある）
+            $post->delete();
+
+            // ====================================================
+            // 3. 削除後の再審査：コンプリート剥奪チェック
+            // ====================================================
+            foreach ($potentiallyAffectedRallies as $rally) {
+                // A. このラリーの条件（期間・対象店）で、現在有効な投稿数を数え直す
+                $validPostsCount = $user->posts()
+                    ->whereIn('shop_id', $rally->shops->pluck('id')) // ラリー対象店
+                    ->where('eaten_at', '>=', $rally->created_at)    // ラリー作成日以降
+                    ->distinct('shop_id')                            // 同じ店は1回カウント
+                    ->count();
+
+                // B. ラリーの必要店舗数
+                $totalShops = $rally->shops->count();
+
+                // C. 「投稿を消したせいで、店舗数が足りなくなった」場合
+                if ($validPostsCount < $totalShops) {
+                    // 😱 コンプリート剥奪！
+                    
+                    // 中間テーブルを「未達成」に戻す
+                    $user->joinedRallies()->updateExistingPivot($rally->id, [
+                        'is_completed' => false,
+                        'completed_at' => null,
+                    ]);
+
+                    // ユーザーのスコアからボーナス(5pt)を没収
+                    $user->decrement('total_score', 5);
+                    
+                    // 制覇数を減らす
+                    $user->decrement('completed_rallies_count');
+                }
+            }
+        });
+
+        return back()->with('success', '投稿を削除しました。');
     }
 
     // ③ 編集画面を表示する
