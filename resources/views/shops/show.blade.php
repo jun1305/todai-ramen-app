@@ -1,138 +1,186 @@
 <x-app-layout title="{{ $shop->name }}">
-    <div class="bg-white p-6 shadow-sm border-b border-gray-100 mb-4 -mx-4 -mt-4 pt-8 relative">
+    {{-- ========================================== --}}
+    {{-- 店舗情報ヘッダー --}}
+    {{-- ========================================== --}}
+    <div class="bg-white shadow-sm border-b border-gray-100 mb-4 -mx-4 -mt-4 pb-6 pt-safe relative">
         
         {{-- 戻るボタン --}}
-        <a 
-            href="{{ route('shops.index') }}" 
-            onclick="event.preventDefault(); history.back();"
-            class="absolute left-1 top-4 text-gray-400 hover:text-gray-600 transition p-4 rounded-full active:bg-gray-50 z-10"
-        >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-        </a>
-
-        {{-- 店名エリア --}}
-        <div class="flex items-center mb-2 px-2 pl-10 relative z-0"> {{-- mb-4 を mb-2 に詰めて平均点との距離を調整 --}}
-            <div class="h-16 w-16 rounded-full bg-gray-100 overflow-hidden shadow-md border-2 border-white mr-4 shrink-0">
-                @if($shop->latestPost && $shop->latestPost->image_path)
-                <img src="{{ asset($shop->latestPost->image_path) }}" loading="lazy" class="w-full h-full object-cover" />
-                @else
-                <div class="w-full h-full flex items-center justify-center bg-orange-100 text-orange-600 font-black text-2xl">
-                    {{ mb_substr($shop->name, 0, 1) }}
-                </div>
-                @endif
-            </div>
-            <h1 class="text-2xl font-black text-gray-800 leading-tight line-clamp-2">
-                {{ $shop->name }}
-            </h1>
+        <div class="px-4 pt-4 mb-2">
+            <a href="{{ route('shops.index') }}" 
+               onclick="event.preventDefault(); history.back();"
+               class="inline-flex items-center text-gray-400 hover:text-gray-600 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                <span class="text-sm font-bold ml-1">戻る</span>
+            </a>
         </div>
 
-        {{-- ▼▼▼ 追加: 平均点表示エリア (5件以上の場合のみ表示) ▼▼▼ --}}
-        @if($shop->posts_count >= 5)
-        <div class="px-2 pl-10 mb-4">
-            <div class="inline-flex items-center gap-3 bg-orange-50 border border-orange-100 px-4 py-4 mt-1 rounded-xl shadow-sm">
-                <div class="flex flex-col leading-none">
-                    <span class="text-[10px] font-bold text-orange-400">みんなの平均</span>
-                    <span class="text-[10px] font-bold text-gray-400">({{ $shop->posts_count }}件の口コミ)</span>
+        <div class="px-6">
+            <div class="flex items-start gap-4">
+                {{-- 店舗アイコン --}}
+                <div class="h-20 w-20 rounded-full bg-gray-100 overflow-hidden shadow-sm border border-gray-100 shrink-0 relative group">
+                    @if($shop->latestPost && $shop->latestPost->image_path)
+                        <img src="{{ asset($shop->latestPost->image_path) }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
+                    @else
+                        <div class="w-full h-full flex items-center justify-center bg-orange-50 text-orange-400 font-black text-3xl">
+                            {{ mb_substr($shop->name, 0, 1) }}
+                        </div>
+                    @endif
                 </div>
-                <div class="flex items-baseline gap-1 text-orange-600 leading-none border-l border-orange-200 pl-3">
-                    <span class="text-2xl font-black tracking-tighter">{{ number_format($avgScore, 1) }}</span>
-                    <span class="text-xs font-bold text-orange-400">点</span>
+
+                {{-- 店名 & スコア --}}
+                <div class="flex-1 min-w-0 pt-1">
+                    <h1 class="text-xl font-black text-gray-800 leading-tight mb-2">
+                        {{ $shop->name }}
+                    </h1>
+                    
+                    {{-- 住所（モデルの short_address を使用） --}}
+                    @if($shop->address)
+                        <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($shop->name) }}" target="_blank" class="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-blue-500 hover:underline mb-2 transition">
+                            <svg class="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            <span class="truncate font-bold">{{ $shop->short_address }}</span>
+                        </a>
+                    @endif
+
+                    {{-- 平均スコア --}}
+                    @if($avgScore)
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-baseline text-orange-500 leading-none">
+                                <span class="text-2xl font-black tracking-tight">{{ number_format($avgScore, 1) }}</span>
+                                <span class="text-xs font-bold ml-0.5">点</span>
+                            </div>
+                            <span class="text-xs text-gray-400">({{ $shop->posts_count }}件の記録)</span>
+                        </div>
+                    @else
+                        <span class="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-md">まだスコアがありません</span>
+                    @endif
                 </div>
             </div>
-        </div>
-        @endif
-        {{-- ▲▲▲ ここまで ▲▲▲ --}}
 
-        {{-- 外部リンクボタン群 --}}
-        <div class="flex justify-start gap-2 flex-wrap px-2 pl-10 mt-4">
-            <a href="https://www.google.com/search?q={{ urlencode($shop->name) }}+X" target="_blank" class="flex items-center gap-1 bg-black hover:bg-gray-800 text-white text-xs font-bold px-3 py-2 rounded-full transition shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 fill-current" viewBox="0 0 24 24">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                </svg>
-                Post
-            </a>
+            {{-- アクションボタン（サイズ統一・整理） --}}
+            <div class="flex flex-wrap items-center gap-2 mt-6">
+                {{-- ① 記録する (メイン：オレンジに変更＆パラメータ修正) --}}
+                {{-- 参考コードに合わせてパラメータを ['shop_name' => $shop->name] に変更 --}}
+                <a href="{{ route('posts.create', ['shop_name' => $shop->name]) }}" 
+                   class="h-9 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold px-4 rounded-full shadow-md flex items-center gap-2 active:scale-95 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    記録する
+                </a>
 
-            <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($shop->name) }}+ラーメン" target="_blank" class="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-bold px-3 py-2 rounded-full transition border border-gray-200">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
-                </svg>
-                マップ
-            </a>
+                {{-- ② Xで検索 --}}
+                <a href="https://www.google.com/search?q={{ urlencode($shop->name) }}+X" target="_blank" class="h-9 bg-black hover:bg-gray-800 text-white text-xs font-bold px-4 rounded-full flex items-center gap-1.5 transition shadow-sm border border-black">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 fill-current" viewBox="0 0 24 24">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                    Post
+                </a>
 
-            <a href="https://www.google.com/search?q={{ urlencode($shop->name) }}+食べログ" target="_blank" class="flex items-center gap-1 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 text-xs font-bold px-3 py-2 rounded-full transition border border-yellow-200">
-                <span class="text-sm leading-none">🥢</span> 食べログ
-            </a>
+                {{-- ③ 食べログ --}}
+                <a href="https://www.google.com/search?q={{ urlencode($shop->name) }}+食べログ" target="_blank" class="h-9 bg-white border border-gray-200 text-gray-600 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 text-xs font-bold px-4 rounded-full flex items-center gap-1.5 transition">
+                    🥢 食べログ
+                </a>
 
-            <a href="https://www.google.com/search?q={{ urlencode($shop->name) }}+ラーメンDB" target="_blank" class="flex items-center gap-1 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold px-3 py-2 rounded-full transition border border-red-200">
-                <span class="text-sm leading-none">🍜</span> RDB
-            </a>
+                {{-- ④ RDB --}}
+                <a href="https://www.google.com/search?q={{ urlencode($shop->name) }}+ラーメンDB" target="_blank" class="h-9 bg-white border border-gray-200 text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-xs font-bold px-4 rounded-full flex items-center gap-1.5 transition">
+                    🍜 RDB
+                </a>
+            </div>
         </div>
     </div>
 
-    <div class="px-2 pb-20">
-        <h2 class="text-sm font-bold text-gray-500 mb-3 px-2">
+    {{-- 以下、みんなの記録リスト（変更なし） --}}
+    <div class="px-4 pb-20 max-w-xl mx-auto">
+        <h2 class="text-sm font-bold text-gray-500 mb-4 ml-1">
             みんなの記録 ({{ $shop->posts_count }}件)
         </h2>
 
-        @foreach($posts as $post)
-        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-4">
-            
-            {{-- ヘッダー部分 --}}
-            <div class="p-3 flex items-center justify-between border-b border-gray-50">
-                
-                <a href="{{ route('users.show', $post->user->id) }}" class="flex items-center gap-2 group">
-                    <div class="h-6 w-6 rounded-full overflow-hidden shrink-0 border border-gray-100 group-hover:border-orange-300 transition">
-                        @if($post->user->icon_path)
-                        <img src="{{ asset($post->user->icon_path) }}" loading="lazy" class="w-full h-full object-cover" alt="{{ $post->user->name }}" />
-                        @else
-                        <div class="w-full h-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600">
-                            {{ mb_substr($post->user->name, 0, 1) }}
+        <div class="space-y-4">
+            @foreach($posts as $post)
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 relative">
+                <div class="flex justify-between items-center mb-3">
+                    <a href="{{ route('users.show', $post->user->id) }}" class="flex items-center gap-2 group">
+                        <div class="h-8 w-8 rounded-full bg-gray-100 overflow-hidden border border-gray-100">
+                            @if($post->user->icon_path)
+                                <img src="{{ asset($post->user->icon_path) }}" class="w-full h-full object-cover" />
+                            @else
+                                <div class="w-full h-full flex items-center justify-center text-xs font-bold text-gray-400">
+                                    {{ mb_substr($post->user->name, 0, 1) }}
+                                </div>
+                            @endif
                         </div>
+                        <span class="text-sm font-bold text-gray-800 group-hover:text-orange-600 transition">{{ $post->user->name }}</span>
+                    </a>
+                    
+                    <div class="text-right">
+                        <span class="text-xs text-gray-400 block leading-none">{{ $post->eaten_at->format('Y/m/d') }}</span>
+                        <span class="text-[10px] text-gray-300 block mt-0.5">{{ $post->eaten_at->diffForHumans() }}</span>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-baseline gap-1 text-orange-600 leading-none mb-2">
+                            <span class="text-2xl font-black">{{ $post->score }}</span>
+                            <span class="text-xs font-bold">点</span>
+                        </div>
+
+                        @if($post->comment)
+                            <p class="text-sm text-gray-600 leading-relaxed line-clamp-3 mb-2">
+                                {{ $post->comment }}
+                            </p>
+                        @else
+                            <p class="text-xs text-gray-300 italic mb-2">コメントなし</p>
                         @endif
-                    </div>
-                    <span class="text-xs font-bold text-gray-700 group-hover:text-orange-600 transition">
-                        {{ $post->user->name }}
-                    </span>
-                </a>
 
-                <div class="text-[10px] text-gray-400 flex items-center gap-1">
-                    <span>{{ $post->eaten_at->format('Y/m/d') }}</span>
-                    <span class="text-gray-300">•</span>
-                    <span>{{ $post->eaten_at->diffForHumans() }}</span>
+                        <div x-data="{ liked: {{ $post->isLikedBy(Auth::user()) ? 'true' : 'false' }}, count: {{ $post->likes->count() }} }">
+                            <button type="button"
+                                @click="fetch('{{ route('posts.like', $post) }}', { 
+                                    method: 'POST', 
+                                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } 
+                                })
+                                .then(res => res.json())
+                                .then(data => { 
+                                    liked = (data.status === 'added'); 
+                                    count = data.count; 
+                                })"
+                                class="flex items-center gap-1 text-xs font-bold transition group p-1 -ml-1"
+                                :class="liked ? 'text-pink-500' : 'text-gray-400 hover:text-gray-600'"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" 
+                                     class="h-4 w-4 transition-transform active:scale-125 duration-200" 
+                                     :class="liked ? 'fill-current' : 'fill-none'" 
+                                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                                <span x-text="count"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    @if($post->image_path)
+                        <div class="w-24 h-24 shrink-0 rounded-xl bg-gray-100 overflow-hidden border border-gray-50">
+                            <img src="{{ asset($post->image_path) }}" loading="lazy" class="w-full h-full object-cover" />
+                        </div>
+                    @endif
                 </div>
             </div>
-
-            {{-- コンテンツ部分 --}}
-            <div class="flex">
-                <div class="flex-1 p-3 min-w-0">
-                    <div class="flex items-baseline gap-0.5 text-orange-600 leading-none mb-1">
-                        <span class="text-lg font-black tracking-tighter">{{ $post->score }}</span>
-                        <span class="text-[9px] font-bold text-orange-400">点</span>
-                    </div>
-
-                    <p class="text-sm text-gray-700 leading-snug line-clamp-3">
-                        {{ $post->comment }}
-                    </p>
-                </div>
-
-                @if($post->image_path)
-                <div class="w-28 bg-gray-100 relative shrink-0">
-                    <img src="{{ asset($post->image_path) }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover" />
-                </div>
-                @endif
-            </div>
+            @endforeach
         </div>
-        @endforeach 
-        
+
         @if($posts->isEmpty())
-        <div class="text-center py-10 text-gray-400 text-sm">
-            まだ投稿がありません
-        </div>
+            <div class="py-12 text-center">
+                <div class="inline-block p-4 rounded-full bg-gray-50 text-gray-300 mb-2">
+                    <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                </div>
+                <p class="text-gray-400 font-bold text-sm">まだ投稿がありません</p>
+                <p class="text-xs text-gray-400 mt-1">一番乗りで記録しましょう！</p>
+            </div>
         @endif
-        
-        <div class="mt-8 pb-10">
+
+        <div class="mt-8">
             {{ $posts->links('vendor.pagination.ramen') }}
         </div>
     </div>

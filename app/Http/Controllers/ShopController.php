@@ -41,13 +41,13 @@ class ShopController extends Controller
     // showメソッドは変更なしなので省略...
     public function show($id)
     {
-        // ... (前のコードのまま) ...
         $shop = Shop::withCount('posts')->with(['latestPost'])->findOrFail($id);
         $posts = $shop->posts()->with('user')->latest('eaten_at')->paginate(10);
 
-        $avgScore = null;
-        if ($shop->posts_count >= 5) {
-            $avgScore = round($shop->posts()->avg('score'), 1);
+        // ★修正: 5件制限を撤廃。1件でもあれば計算、なければ null
+        $avgScore = $shop->posts()->avg('score');
+        if ($avgScore) {
+            $avgScore = round($avgScore, 1);
         }
 
         return view('shops.show', compact('shop', 'posts', 'avgScore'));
