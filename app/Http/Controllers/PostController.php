@@ -10,26 +10,20 @@ use Illuminate\Support\Facades\Auth;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
-use App\Notifications\NewPost; 
-use Illuminate\Support\Facades\Notification;
-use App\Models\User;
-use App\Models\Rally;
 use Illuminate\Support\Facades\DB;
-// Jobクラスの読み込み
 use App\Jobs\ProcessPostSubmission;
 use App\Jobs\ProcessPostUpdate;
 use App\Jobs\ProcessPostDelete;
 
 class PostController extends Controller
 {
-    // ① 投稿フォームを表示する
+    // ① 投稿フォームを表示
     public function create()
     {
         return view('posts.create');
     }
 
-    // ② 投稿を保存する
+    // ② 投稿を保存
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -41,30 +35,14 @@ class PostController extends Controller
             'google_place_id' => 'nullable|string|max:255',
         ]);
 
-        // トランザクションは「保存の成功」だけを担保
+        // トランザクション
         $post = DB::transaction(function () use ($request, $validated) {
             $user = Auth::user();
 
-            // 1. 店の特定・作成（ここは同期でやる必要あり）
-            $shop = null;
-            if ($request->google_place_id) $shop = Shop::where('google_place_id', $request->google_place_id)->first();
-            if (!$shop) $shop = Shop::where('name', $validated['shop_name'])->first();
-            if (!$shop) {
-                $shop = Shop::create([
-                    'name' => $validated['shop_name'],
-                    'google_place_id' => $request->google_place_id,
-                    'address' => $request->address,
-                ]);
-            } else {
-                if (empty($shop->google_place_id) && $request->google_place_id) {
-                    $shop->update([
-                        'google_place_id' => $request->google_place_id,
-                        'address' => $request->address ?? $shop->address,
-                    ]);
-                }
-            }
+            // ★★★ 修正：ショップ特定ロジック（強化版） ★★★
+            $shop = $this->findOrCreateShop($validated['shop_name'], $request->google_place_id, $request->address);
 
-            // 2. 画像処理
+            // 画像処理
             $imagePath = null;
             if ($request->hasFile('image')) {
                 $manager = new ImageManager(new Driver());
@@ -77,7 +55,7 @@ class PostController extends Controller
                 $imagePath = $fileName;
             }
 
-            // 3. 保存
+            // 保存
             $post = new Post();
             $post->shop_id = $shop->id;
             $post->shop_name = $shop->name;
@@ -87,7 +65,6 @@ class PostController extends Controller
             $post->eaten_at = now();
             $post->image_path = $imagePath;
 
-            // ポイント計算
             $points = 1;
             $hasCampaign = Campaign::where('shop_id', $shop->id)->where('is_active', true)->exists();
             if ($hasCampaign) $points = 2;
@@ -95,49 +72,26 @@ class PostController extends Controller
             
             $post->save();
 
-            // ユーザーの表示用スコアだけ先に更新
             $user->increment('total_score', $points);
             $user->increment('posts_count');
 
             return $post;
         });
 
-        // ★★★ ここを変更！「レスポンスを返した後にやっておいて！」 ★★★
-        // dispatch($post) ではなく dispatchAfterResponse($post) にします
+        // ジョブ実行（レスポンス後）
         ProcessPostSubmission::dispatchAfterResponse($post);
 
         return redirect()->route('profile.index')->with('success', '投稿しました！');
     }
 
-    public function destroy(Post $post)
-    {
-        if (Auth::id() !== $post->user_id) abort(403);
-
-        // 消す前に必要なデータをメモる
-        $userId = $post->user_id;
-        $shopId = $post->shop_id;
-        $earnedPoints = $post->earned_points;
-
-        // さっさと消す
-        $post->delete();
-
-        // ★★★ ここを変更！「あとは裏でよろしく！」 ★★★
-        ProcessPostDelete::dispatchAfterResponse($userId, $shopId, $earnedPoints);
-
-        return back()->with('success', '投稿を削除しました。');
-    }
-
-    // ③ 編集画面を表示する
+    // ③ 編集
     public function edit(Post $post)
     {
-        if (Auth::id() !== $post->user_id) {
-            abort(403);
-        }
-
+        if (Auth::id() !== $post->user_id) abort(403);
         return view('posts.edit', compact('post'));
     }
 
-    // ④ 投稿を更新する
+    // ④ 更新
     public function update(Request $request, Post $post)
     {
         if (Auth::id() !== $post->user_id) abort(403);
@@ -152,17 +106,10 @@ class PostController extends Controller
         ]);
 
         DB::transaction(function () use ($request, $post, $validated) {
-            // 店ロジック
-            $shop = null;
-            if ($request->google_place_id) $shop = Shop::where('google_place_id', $request->google_place_id)->first();
-            if (!$shop) $shop = Shop::where('name', $validated['shop_name'])->first();
-            if (!$shop) {
-                $shop = Shop::create(['name' => $validated['shop_name'], 'address' => $request->address, 'google_place_id' => $request->google_place_id]);
-            } else {
-                if (empty($shop->google_place_id) && $request->google_place_id) {
-                    $shop->update(['google_place_id' => $request->google_place_id, 'address' => $request->address ?? $shop->address]);
-                }
-            }
+            
+            // ★★★ 修正：ショップ特定ロジック（強化版） ★★★
+            // 名前が変わっていたら新しい店になる可能性があるので、ここでも同じロジックを通す
+            $shop = $this->findOrCreateShop($validated['shop_name'], $request->google_place_id, $request->address);
 
             // 画像処理
             if ($request->hasFile('image')) {
@@ -186,11 +133,69 @@ class PostController extends Controller
             $post->save();
         });
 
-        // ★★★ ここを変更！「店スコア更新は裏で！」 ★★★
         if ($post->shop_id) {
             ProcessPostUpdate::dispatchAfterResponse($post->shop_id);
         }
 
         return redirect()->route('profile.index')->with('success', '投稿を更新しました！');
+    }
+
+    // 削除（変更なし）
+    public function destroy(Post $post)
+    {
+        if (Auth::id() !== $post->user_id) abort(403);
+        $userId = $post->user_id;
+        $shopId = $post->shop_id;
+        $earnedPoints = $post->earned_points;
+        $post->delete();
+        ProcessPostDelete::dispatchAfterResponse($userId, $shopId, $earnedPoints);
+        return back()->with('success', '投稿を削除しました。');
+    }
+
+    // ==========================================
+    // ★★★ 追加：ショップ特定・更新の共通ロジック ★★★
+    // ==========================================
+    private function findOrCreateShop($name, $googlePlaceId, $address)
+    {
+        $shop = null;
+
+        // 1. Google Place ID で探す（一番確実）
+        if ($googlePlaceId) {
+            $shop = Shop::where('google_place_id', $googlePlaceId)->first();
+        }
+
+        // 2. なければ店名で探す
+        if (!$shop) {
+            $shop = Shop::where('name', $name)->first();
+        }
+
+        // 3. それでもなければ新規作成
+        if (!$shop) {
+            $shop = Shop::create([
+                'name' => $name,
+                'google_place_id' => $googlePlaceId,
+                'address' => $address,
+            ]);
+        } else {
+            // 4. 既存のお店がある場合、情報が足りなければ埋める（ここが重要！）
+            $updateData = [];
+
+            // DBにPlaceIDがない、かつ今回送られてきた場合は更新
+            if (empty($shop->google_place_id) && $googlePlaceId) {
+                $updateData['google_place_id'] = $googlePlaceId;
+            }
+
+            // DBに住所がない、かつ今回送られてきた場合は更新
+            if (empty($shop->address) && $address) {
+                $updateData['address'] = $address;
+            }
+
+            // 更新対象があればアップデート実行
+            if (!empty($updateData)) {
+                $shop->update($updateData);
+            }
+        }
+
+        return $shop;
     }
 }

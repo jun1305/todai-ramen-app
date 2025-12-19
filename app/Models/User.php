@@ -27,7 +27,10 @@ class User extends Authenticatable
         'email',
         'password',
         'icon_path',
-        'points',
+        // 'points', // ← これが昔のカラム名なら削除してOK
+        'total_score',             // ★追加
+        'posts_count',             // ★追加
+        'completed_rallies_count', // ★追加
         'secret_answer',
     ];
 

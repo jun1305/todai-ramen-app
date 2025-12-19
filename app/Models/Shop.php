@@ -10,9 +10,11 @@ class Shop extends Model
     // ▼▼▼ 修正: 住所とGoogle IDを追加 ▼▼▼
     protected $fillable = [
         'name',
-        'address',
-        'google_place_id'
-    ]; 
+        'address',           // 👈 これありますか？
+        'google_place_id',   // 👈 これありますか？
+        'posts_count',
+        'posts_avg_score',
+    ];
 
     public function posts(): HasMany
     {
