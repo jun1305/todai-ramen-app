@@ -7,36 +7,49 @@ use App\Models\Shop;
 
 class ShopController extends Controller
 {
-    // ① お店一覧（変更なし）
     public function index(Request $request)
     {
-        $query = Shop::withCount('posts')->with(['latestPost']);
+        $search = $request->search;
 
-        if ($search = $request->input('search')) {
-            $query->where('name', 'like', "%{$search}%");
+        // 1. 検索機能
+        $query = Shop::query();
+        
+        if ($search) {
+            $query->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('address', 'like', '%' . $search . '%');
         }
 
-        $shops = $query->orderBy('posts_count', 'desc')->paginate(20);
+        // 2. リスト表示用
+        $shops = $query->with('latestPost')
+            ->orderBy('posts_count', 'desc')
+            ->paginate(10);
 
-        return view('shops.index', compact('shops', 'search'));
+        // 3. ピックアップ用（★修正: ランダムに5件取得）
+        // 検索時は表示しないので、検索がない時だけ取得
+        $pickupShops = collect();
+        if (!$search) {
+            $pickupShops = Shop::whereHas('posts') // 投稿がある店のみ
+                ->with('latestPost')
+                ->inRandomOrder() // ★ここをランダムに変更
+                ->limit(5)
+                ->get();
+        }
+
+        return view('shops.index', compact('shops', 'pickupShops', 'search'));
     }
 
-    // ② お店詳細（修正）
+    // showメソッドは変更なしなので省略...
     public function show($id)
     {
+        // ... (前のコードのまま) ...
         $shop = Shop::withCount('posts')->with(['latestPost'])->findOrFail($id);
         $posts = $shop->posts()->with('user')->latest('eaten_at')->paginate(10);
 
-        // ▼▼▼ 追加: 5件以上なら平均点を計算 ▼▼▼
-        $avgScore = null; // 初期値はnull
-        
+        $avgScore = null;
         if ($shop->posts_count >= 5) {
-            // 平均を算出し、小数点第1位で四捨五入（例: 84.375 -> 84.4）
             $avgScore = round($shop->posts()->avg('score'), 1);
         }
-        // ▲▲▲ ここまで ▲▲▲
 
-        // avgScore を View に渡す
         return view('shops.show', compact('shop', 'posts', 'avgScore'));
     }
 }
