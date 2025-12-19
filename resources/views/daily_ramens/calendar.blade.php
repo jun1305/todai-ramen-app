@@ -107,6 +107,16 @@
             </div>
         @endfor
     </div>
+    <div class="p-2 flex justify-end border-t border-gray-50 bg-gray-50/50 rounded-b-xl">
+        <a href="{{ route('daily.fetch_calendar', ['id' => $post->id ?? null, 'month' => \Carbon\Carbon::now()->format('Y-m')]) }}" 
+           class="js-calendar-nav inline-flex items-center gap-1 text-xs font-bold text-orange-600 bg-white border border-orange-200 hover:bg-orange-50 hover:border-orange-300 px-3 py-1.5 rounded-lg shadow-sm transition"
+           title="現在の月に戻る">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>今月へ</span>
+        </a>
+    </div>
 </div>
 
 {{-- ▼▼▼ Custom Month Picker Modal (Added at the bottom of the included file) ▼▼▼ --}}
