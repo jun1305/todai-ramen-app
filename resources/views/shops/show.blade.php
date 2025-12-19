@@ -111,9 +111,16 @@
 
         <div class="space-y-4">
             @foreach($posts as $post)
-            <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 relative">
+            {{-- ▼▼▼ 修正1: relative を追加（全体リンクの基準） & transition hoverを追加 ▼▼▼ --}}
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 relative transition hover:shadow-md">
+                
+                {{-- ▼▼▼ 修正2: カード全体を覆う透明なリンク（詳細ページへ） ▼▼▼ --}}
+                <a href="{{ route('posts.show', $post) }}" class="absolute inset-0 z-0"></a>
+
+                {{-- ユーザー情報＆日付 --}}
                 <div class="flex justify-between items-center mb-3">
-                    <a href="{{ route('users.show', $post->user->id) }}" class="flex items-center gap-2 group">
+                    {{-- ▼▼▼ 修正3: relative z-10 を追加（ユーザーリンクを手前に） ▼▼▼ --}}
+                    <a href="{{ route('users.show', $post->user->id) }}" class="relative z-10 flex items-center gap-2 group">
                         <div class="h-8 w-8 rounded-full bg-gray-100 overflow-hidden border border-gray-100">
                             @if($post->user->icon_path)
                                 <img src="{{ asset($post->user->icon_path) }}" class="w-full h-full object-cover" />
@@ -126,6 +133,7 @@
                         <span class="text-sm font-bold text-gray-800 group-hover:text-orange-600 transition">{{ $post->user->name }}</span>
                     </a>
                     
+                    {{-- 相対時間表示 --}}
                     <div class="text-right">
                         <span class="text-xs text-gray-400 block leading-none">{{ $post->eaten_at->format('Y/m/d') }}</span>
                         <span class="text-[10px] text-gray-300 block mt-0.5">{{ $post->eaten_at->diffForHumans() }}</span>
@@ -133,12 +141,16 @@
                 </div>
 
                 <div class="flex gap-4">
-                    <div class="flex-1 min-w-0">
+                    {{-- 左側：スコアとコメント --}}
+                    {{-- ▼▼▼ 修正4: pointer-events-none を追加（クリック貫通させるため） ▼▼▼ --}}
+                    <div class="flex-1 min-w-0 pointer-events-none">
+                        {{-- スコア --}}
                         <div class="flex items-baseline gap-1 text-orange-600 leading-none mb-2">
                             <span class="text-2xl font-black">{{ $post->score }}</span>
                             <span class="text-xs font-bold">点</span>
                         </div>
 
+                        {{-- コメント --}}
                         @if($post->comment)
                             <p class="text-sm text-gray-600 leading-relaxed line-clamp-3 mb-2">
                                 {{ $post->comment }}
@@ -147,7 +159,9 @@
                             <p class="text-xs text-gray-300 italic mb-2">コメントなし</p>
                         @endif
 
-                        <div x-data="{ liked: {{ $post->isLikedBy(Auth::user()) ? 'true' : 'false' }}, count: {{ $post->likes->count() }} }">
+                        {{-- いいねボタン --}}
+                        {{-- ▼▼▼ 修正5: pointer-events-auto と relative z-10 を追加（クリック有効化） ▼▼▼ --}}
+                        <div class="pointer-events-auto relative z-10 inline-block" x-data="{ liked: {{ $post->isLikedBy(Auth::user()) ? 'true' : 'false' }}, count: {{ $post->likes->count() }} }">
                             <button type="button"
                                 @click="fetch('{{ route('posts.like', $post) }}', { 
                                     method: 'POST', 
@@ -172,8 +186,10 @@
                         </div>
                     </div>
 
+                    {{-- 右側：写真（あれば） --}}
                     @if($post->image_path)
-                        <div class="w-24 h-24 shrink-0 rounded-xl bg-gray-100 overflow-hidden border border-gray-50">
+                        {{-- 写真エリアは pointer-events-none がなくても画像自体はクリックイベントを持たないので貫通するが、念のため指定しても良い --}}
+                        <div class="w-24 h-24 shrink-0 rounded-xl bg-gray-100 overflow-hidden border border-gray-50 pointer-events-none">
                             <img src="{{ asset($post->image_path) }}" loading="lazy" class="w-full h-full object-cover" />
                         </div>
                     @endif

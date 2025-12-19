@@ -198,4 +198,12 @@ class PostController extends Controller
 
         return $shop;
     }
+    // 投稿詳細画面
+    public function show(Post $post)
+    {
+        // コメント投稿者(user)情報も含めて取得
+        $post->load(['comments.user', 'shop', 'user']);
+
+        return view('posts.show', compact('post'));
+    }
 }

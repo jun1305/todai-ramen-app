@@ -164,95 +164,98 @@
     </div>
 
     <div class="pb-20">
-        <h3 class="font-bold text-gray-500 text-sm mb-4 px-2 flex items-center gap-2">
-            <span>📅</span> 麺活ログ
-        </h3>
+    <h3 class="font-bold text-gray-500 text-sm mb-4 px-2 flex items-center gap-2">
+        <span>📅</span> 麺活ログ
+    </h3>
 
-        @foreach($posts as $post)
-        {{-- ▼▼▼ 修正: mb-4 を mb-3 にしてカード間の隙間を少し詰める ▼▼▼ --}}
-        <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-3 flex relative group">
+    @foreach($posts as $post)
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden mb-3 flex relative group transition hover:shadow-md">
+        
+        {{-- カード全体リンク --}}
+        <a href="{{ route('posts.show', $post) }}" class="absolute inset-0 z-0"></a>
+        
+        {{-- ▼▼▼ 修正1: pointer-events-none を追加（これでクリックが貫通して全体リンクが反応するようになります） ▼▼▼ --}}
+        <div class="flex-1 p-3 pl-4 relative pointer-events-none">
             
-            {{-- ▼▼▼ 修正: p-4 を p-3 pl-4 に変更して少しコンパクトに。relative を追加（いいねボタンの基準点） ▼▼▼ --}}
-            <div class="flex-1 p-3 pl-4 relative">
-                
-                <div class="flex justify-between items-start mb-1">
-                    {{-- 日付 --}}
-                    <p class="text-[10px] text-gray-400 font-bold flex items-center gap-1">
-                        {{ $post->eaten_at->format('Y/m/d') }}
-                        <span class="text-gray-300">•</span>
-                        <span>{{ $post->eaten_at->diffForHumans() }}</span>
-                    </p>
-                    
-                    {{-- 編集・削除ボタン --}}
-                    @if(Auth::id() === $post->user_id)
-                    <div class="flex items-center gap-1"> 
-                        <a href="{{ route('posts.edit', $post) }}" class="text-gray-300 hover:text-blue-500 transition-colors p-1" title="編集">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                        </a>
-                        <form action="{{ route('posts.destroy', $post) }}" method="POST" onsubmit="return confirm('本当に削除してもよろしいですか？');">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="text-gray-300 hover:text-red-500 transition-colors p-1" title="削除">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                            </button>
-                        </form>
-                    </div>
-                    @endif
-                </div>
-
-                {{-- ▼▼▼ 修正: mb-2 を mb-1 にして縦幅短縮 ▼▼▼ --}}
-                <h4 class="font-bold text-gray-800 mb-1 line-clamp-1">
-                    <a href="{{ route('shops.show', $post->shop->id) }}" class="hover:text-orange-600 hover:underline">
-                        {{ $post->shop->name }}
-                    </a>
-                </h4>
-
-                {{-- 点数表示（単独行に変更） --}}
-                <div class="flex items-baseline gap-0.5 text-orange-600 leading-none mb-1">
-                    <span class="text-xl font-black tracking-tighter">{{ $post->score }}</span>
-                    <span class="text-[10px] font-bold text-orange-400">点</span>
-                </div>
-
-                {{-- コメント --}}
-                {{-- ▼▼▼ 修正: pr-8 を追加して、右下のいいねボタンと文字が重なるのを防ぐ ▼▼▼ --}}
-                <p class="text-xs text-gray-500 line-clamp-2 pr-8">
-                    {{ $post->comment }}
+            <div class="flex justify-between items-start mb-1">
+                {{-- 日付 --}}
+                <p class="text-[10px] text-gray-400 font-bold flex items-center gap-1">
+                    {{ $post->eaten_at->format('Y/m/d') }}
+                    <span class="text-gray-300">•</span>
+                    <span>{{ $post->eaten_at->diffForHumans() }}</span>
                 </p>
-
-                {{-- ▼▼▼ いいねボタン（右下に絶対配置） ▼▼▼ --}}
-                <div class="absolute bottom-3 right-3" x-data="{ liked: {{ $post->isLikedBy(Auth::user()) ? 'true' : 'false' }}, count: {{ $post->likes->count() }} }">
-                    <button @click="fetch('/posts/{{ $post->id }}/like', { method: 'POST', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } }).then(res => res.json()).then(data => { liked = (data.status === 'added'); count = data.count; })"
-                        class="flex items-center gap-1 group p-1 transition active:scale-95">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-colors duration-300" :class="liked ? 'text-red-500 fill-current' : 'text-gray-300 group-hover:text-gray-400'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                
+                {{-- 編集・削除ボタン --}}
+                @if(Auth::id() === $post->user_id)
+                {{-- ▼▼▼ 修正2: ここはクリックさせたいので pointer-events-auto を追加 ▼▼▼ --}}
+                <div class="relative z-10 flex items-center gap-1 pointer-events-auto"> 
+                    <a href="{{ route('posts.edit', $post) }}" class="text-gray-300 hover:text-blue-500 transition-colors p-1" title="編集">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
-                        <span x-show="count > 0" x-text="count" class="text-xs font-bold text-gray-400"></span>
-                    </button>
+                    </a>
+                    <form action="{{ route('posts.destroy', $post) }}" method="POST" onsubmit="return confirm('本当に削除してもよろしいですか？');">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="text-gray-300 hover:text-red-500 transition-colors p-1" title="削除">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </form>
                 </div>
-                {{-- ▲▲▲ 追加ここまで ▲▲▲ --}}
+                @endif
             </div>
 
-            @if($post->image_path)
-            <div class="w-24 bg-gray-100 shrink-0">
-                <img src="{{ asset($post->image_path) }}" loading="lazy" class="w-full h-full object-cover" />
+            <h4 class="font-bold text-gray-800 mb-1 line-clamp-1">
+                {{-- ▼▼▼ 修正3: 店名リンクも pointer-events-auto を追加 ▼▼▼ --}}
+                <a href="{{ route('shops.show', $post->shop->id) }}" class="relative z-10 hover:text-orange-600 hover:underline pointer-events-auto">
+                    {{ $post->shop->name }}
+                </a>
+            </h4>
+
+            {{-- 点数表示 --}}
+            <div class="flex items-baseline gap-0.5 text-orange-600 leading-none mb-1">
+                <span class="text-xl font-black tracking-tighter">{{ $post->score }}</span>
+                <span class="text-[10px] font-bold text-orange-400">点</span>
             </div>
-            @endif
+
+            {{-- コメント --}}
+            <p class="text-xs text-gray-500 line-clamp-2 pr-8">
+                {{ $post->comment }}
+            </p>
+
+            {{-- いいねボタン --}}
+            {{-- ▼▼▼ 修正4: いいねボタンも pointer-events-auto を追加 ▼▼▼ --}}
+            <div class="absolute bottom-3 right-3 z-10 pointer-events-auto" x-data="{ liked: {{ $post->isLikedBy(Auth::user()) ? 'true' : 'false' }}, count: {{ $post->likes->count() }} }">
+                <button @click="fetch('/posts/{{ $post->id }}/like', { method: 'POST', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } }).then(res => res.json()).then(data => { liked = (data.status === 'added'); count = data.count; })"
+                    class="flex items-center gap-1 group p-1 transition active:scale-95">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-colors duration-300" :class="liked ? 'text-red-500 fill-current' : 'text-gray-300 group-hover:text-gray-400'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    <span x-show="count > 0" x-text="count" class="text-xs font-bold text-gray-400"></span>
+                </button>
+            </div>
         </div>
-        @endforeach
 
-        @if($posts->isEmpty())
-        <div class="text-center py-10 text-gray-400">
-            まだ記録がありません。<br />今日の一杯を食べに行こう！
+        @if($post->image_path)
+        {{-- 画像エリア（元々 pointer-events-none があるのでそのままでOK） --}}
+        <div class="w-24 bg-gray-100 shrink-0 pointer-events-none">
+            <img src="{{ asset($post->image_path) }}" loading="lazy" class="w-full h-full object-cover" />
         </div>
         @endif
-
-        <div class="mt-8 pb-10">
-            {{ $posts->links('vendor.pagination.ramen') }}
-        </div> 
     </div>
+    @endforeach
+
+    @if($posts->isEmpty())
+    <div class="text-center py-10 text-gray-400">
+        まだ記録がありません。<br />今日の一杯を食べに行こう！
+    </div>
+    @endif
+
+    <div class="mt-8 pb-10">
+        {{ $posts->links('vendor.pagination.ramen') }}
+    </div> 
+</div>
 
     {{-- 以下、モーダル用コード（変更なし） --}}
     @if(Auth::id() === $user->id)

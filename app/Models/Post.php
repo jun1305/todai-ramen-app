@@ -44,4 +44,9 @@ class Post extends Model
         if (!$user) return false;
         return $this->likes->where('user_id', $user->id)->isNotEmpty();
     }
+
+    public function comments()
+    {
+        return $this->hasMany(Comment::class)->latest(); // 新しい順
+    }
 }

@@ -15,6 +15,7 @@ use App\Models\Campaign; // ← 追加: ロジック内で使用しているた�
 use App\Http\Controllers\RallyController;
 use App\Http\Controllers\DailyRamenController;
 use App\Models\User;
+use App\Http\Controllers\CommentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -53,6 +54,13 @@ Route::middleware('auth')->group(function () {
         
         return view('welcome', compact('posts', 'campaign'));
     })->name('home'); // 名前をつけておくと便利
+
+    // 投稿詳細
+    Route::get('/posts/{post}', [PostController::class, 'show'])->name('posts.show');
+
+    // コメント投稿・削除
+    Route::post('/posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
 
     // ▼ 投稿機能（作成・保存・編集・更新・削除・いいね）
     Route::get('/posts/create', [PostController::class, 'create'])->name('posts.create');

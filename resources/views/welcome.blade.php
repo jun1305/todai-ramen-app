@@ -46,12 +46,16 @@
             {{-- space-y-8 だと広すぎるので space-y-4 (16px) に詰めました --}}
             <div class="space-y-4">
                 @foreach($posts as $post)
-                <div class="bg-white rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] overflow-hidden border border-gray-100/50">
+                {{-- ▼▼▼ 修正1: relative を追加（中の絶対配置リンクの基準にするため） ▼▼▼ --}}
+                <div class="relative bg-white rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] overflow-hidden border border-gray-100/50 transition hover:shadow-lg">
                     
+                    {{-- ▼▼▼ 修正2: カード全体を覆う透明なリンク（投稿詳細へ） ▼▼▼ --}}
+                    <a href="{{ route('posts.show', $post) }}" class="absolute inset-0 z-0"></a>
+
                     {{-- 1. ヘッダー --}}
-                    {{-- 上下のpaddingを py-4 から py-3 に少し詰めました --}}
                     <div class="px-4 py-3 flex items-center justify-between">
-                        <a href="{{ route('users.show', $post->user->id) }}" class="flex items-center gap-3 group">
+                        {{-- ▼▼▼ 修正3: 既存リンクには relative z-10 をつけて手前に持ってくる ▼▼▼ --}}
+                        <a href="{{ route('users.show', $post->user->id) }}" class="relative z-10 flex items-center gap-3 group">
                             <div class="h-9 w-9 rounded-full overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-100">
                                 @if($post->user->icon_path)
                                     <img src="{{ asset($post->user->icon_path) }}" class="w-full h-full object-cover" alt="{{ $post->user->name }}" />
@@ -64,13 +68,8 @@
                             <div>
                                 <p class="text-sm font-bold text-gray-900 leading-none group-hover:text-orange-600 transition">{{ $post->user->name }}</p>
                                 <p class="text-[10px] text-gray-400 mt-0.5 font-medium flex items-center gap-1">
-                                    {{-- 日付 --}}
                                     <span>{{ $post->eaten_at->format('Y.m.d') }}</span>
-                                    
-                                    {{-- 区切り線 --}}
                                     <span class="text-gray-300">•</span>
-                                    
-                                    {{-- 相対時間（例: 3日前、1週間前） --}}
                                     <span>{{ $post->eaten_at->diffForHumans() }}</span>
                                 </p>
                             </div>
@@ -78,7 +77,7 @@
                     </div>
 
                     {{-- 2. 画像 --}}
-                    <div class="relative w-full aspect-square bg-gray-100">
+                    <div class="relative w-full aspect-square bg-gray-100 pointer-events-none"> {{-- 画像自体はクリックイベントを通す必要がないので pointer-events-none でもOK --}}
                         @if($post->image_path)
                             <img src="{{ asset($post->image_path) }}" loading="lazy" class="w-full h-full object-cover" alt="ラーメン画像" />
                         @else
@@ -95,11 +94,11 @@
                     </div>
 
                     {{-- 3. アクション & コンテンツ --}}
-                    {{-- 余白を px-5 から px-4 に微調整 --}}
                     <div class="px-4 pt-3 pb-5">
                         <div class="flex items-center justify-between mb-2">
-                            {{-- いいね --}}
-                            <div x-data="{ liked: {{ $post->isLikedBy(Auth::user()) ? 'true' : 'false' }}, count: {{ $post->likes->count() }} }">
+                            {{-- いいねボタン --}}
+                            {{-- ▼▼▼ 修正4: ここも relative z-10 を追加 ▼▼▼ --}}
+                            <div class="relative z-10" x-data="{ liked: {{ $post->isLikedBy(Auth::user()) ? 'true' : 'false' }}, count: {{ $post->likes->count() }} }">
                                 <button @click="fetch('/posts/{{ $post->id }}/like', { method: 'POST', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } }).then(res => res.json()).then(data => { liked = (data.status === 'added'); count = data.count; })"
                                     class="flex items-center gap-1.5 group -ml-1 p-1">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transition-colors duration-300" :class="liked ? 'text-red-500 fill-current' : 'text-gray-800'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -110,10 +109,10 @@
                             </div>
 
                             {{-- マップ --}}
-                            {{-- ▼▼▼ class に flex items-center gap-1 を追加 ▼▼▼ --}}
+                            {{-- ▼▼▼ 修正5: relative z-10 を追加 ▼▼▼ --}}
                             <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($post->shop->name) }}+ラーメン" 
                                target="_blank" 
-                               class="flex items-center gap-1 text-gray-400 hover:text-green-600 transition p-1">
+                               class="relative z-10 flex items-center gap-1 text-gray-400 hover:text-green-600 transition p-1">
 
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -127,11 +126,14 @@
                         </div>
 
                         <div class="mb-1">
-                            <a href="{{ route('shops.show', $post->shop->id) }}" class="text-base font-black text-gray-900 hover:text-orange-600 transition line-clamp-1">
+                            {{-- 店名リンク --}}
+                            {{-- ▼▼▼ 修正6: relative z-10 を追加 ▼▼▼ --}}
+                            <a href="{{ route('shops.show', $post->shop->id) }}" class="relative z-10 text-base font-black text-gray-900 hover:text-orange-600 transition line-clamp-1">
                                 {{ $post->shop->name }}
                             </a>
                         </div>
                         
+                        {{-- コメント（ここをクリックしても詳細へ飛ぶ） --}}
                         <p class="text-xs text-gray-700 leading-relaxed font-medium line-clamp-3">
                             {{ $post->comment }}
                         </p>
