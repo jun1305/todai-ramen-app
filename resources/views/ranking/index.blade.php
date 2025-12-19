@@ -4,7 +4,7 @@
         {{-- ========================================== --}}
         {{-- 固定ヘッダー（タブ ＆ 期間切り替え） --}}
         {{-- ========================================== --}}
-        <div class="bg-white shadow-md sticky top-0 z-30">
+        <div class="bg-white shadow-md sticky top-0 z-10">
             <div class="px-4 py-3 space-y-3">
                 {{-- ① タブ切り替えボタン --}}
                 <div class="flex bg-gray-100 p-1 rounded-full">
