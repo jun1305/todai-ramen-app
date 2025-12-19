@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Notification;
 use App\Models\User;
 use App\Models\Rally;
 use Illuminate\Support\Facades\DB;
+// Jobクラスの読み込み
 use App\Jobs\ProcessPostSubmission;
 use App\Jobs\ProcessPostUpdate;
 use App\Jobs\ProcessPostDelete;
@@ -86,7 +87,7 @@ class PostController extends Controller
             $post->eaten_at = now();
             $post->image_path = $imagePath;
 
-            // ポイント計算（単純計算なのでここでやっておく）
+            // ポイント計算
             $points = 1;
             $hasCampaign = Campaign::where('shop_id', $shop->id)->where('is_active', true)->exists();
             if ($hasCampaign) $points = 2;
@@ -94,15 +95,16 @@ class PostController extends Controller
             
             $post->save();
 
-            // ユーザーの表示用スコアだけ先に更新（自分の画面ですぐ見たいから）
+            // ユーザーの表示用スコアだけ先に更新
             $user->increment('total_score', $points);
             $user->increment('posts_count');
 
             return $post;
         });
 
-        // ★★★ ここが爆速の鍵！「あとは任せた！」 ★★★
-        ProcessPostSubmission::dispatch($post);
+        // ★★★ ここを変更！「レスポンスを返した後にやっておいて！」 ★★★
+        // dispatch($post) ではなく dispatchAfterResponse($post) にします
+        ProcessPostSubmission::dispatchAfterResponse($post);
 
         return redirect()->route('profile.index')->with('success', '投稿しました！');
     }
@@ -119,8 +121,8 @@ class PostController extends Controller
         // さっさと消す
         $post->delete();
 
-        // ★★★ 重い「剥奪処理」や「集計」は裏で ★★★
-        ProcessPostDelete::dispatch($userId, $shopId, $earnedPoints);
+        // ★★★ ここを変更！「あとは裏でよろしく！」 ★★★
+        ProcessPostDelete::dispatchAfterResponse($userId, $shopId, $earnedPoints);
 
         return back()->with('success', '投稿を削除しました。');
     }
@@ -184,9 +186,9 @@ class PostController extends Controller
             $post->save();
         });
 
-        // ★★★ 再計算は裏で ★★★
+        // ★★★ ここを変更！「店スコア更新は裏で！」 ★★★
         if ($post->shop_id) {
-            ProcessPostUpdate::dispatch($post->shop_id);
+            ProcessPostUpdate::dispatchAfterResponse($post->shop_id);
         }
 
         return redirect()->route('profile.index')->with('success', '投稿を更新しました！');
