@@ -38,8 +38,20 @@
                     {{-- 住所（モデルの short_address を使用） --}}
                     @if($shop->address)
                         <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($shop->name) }}" target="_blank" class="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-blue-500 hover:underline mb-2 transition">
-                            <svg class="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            <svg class="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
                             <span class="truncate font-bold">{{ $shop->short_address }}</span>
+                        </a>
+                    @else
+                        {{-- 住所がない場合は「店名」でマップ検索 --}}
+                        <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($shop->name . ' ラーメン') }}" target="_blank" class="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-blue-500 hover:underline mb-2 transition">
+                            {{-- 検索アイコン（虫眼鏡）に変更 --}}
+                            <svg class="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            <span class="truncate font-bold">住所未登録（マップで検索）</span>
                         </a>
                     @endif
 

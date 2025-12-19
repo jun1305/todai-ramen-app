@@ -86,12 +86,21 @@
                             </div>
 
                             {{-- 投稿数・エリア（住所短縮） --}}
+                            @if($shop->address)
+                                <p class="text-xs text-gray-400 mb-2 flex items-center gap-2">
+                                    {{-- ★修正: モデルの short_address を使用 --}}
+                                    <span>📍 {{ $shop->short_address }}</span>
+                                    <span>•</span>
+                                    <span>{{ $shop->posts_count }}件の投稿</span>
+                                </p>
+                            @else
                             <p class="text-xs text-gray-400 mb-2 flex items-center gap-2">
-                                {{-- ★修正: Str::limit で10文字程度に制限 --}}
-                                <span>📍 {{ Str::limit($shop->address ?? 'エリア未登録', 10, '...') }}</span>
-                                <span>•</span>
-                                <span>{{ $shop->posts_count }}件の投稿</span>
-                            </p>
+                                    {{-- ★修正: モデルの short_address を使用 --}}
+                                    <span>📍 住所未登録</span>
+                                    <span>•</span>
+                                    <span>{{ $shop->posts_count }}件の投稿</span>
+                                </p>
+                            @endif
 
                             {{-- 最新コメント（吹き出し風） --}}
                             @if($shop->latestPost && $shop->latestPost->comment)
