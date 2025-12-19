@@ -164,11 +164,7 @@
                         >
                         <span class="text-sm font-bold">点</span>
                     </div>
-                    <p
-                        class="text-gray-800 leading-relaxed whitespace-pre-wrap text-sm"
-                    >
-                        {{ $post->comment }}
-                    </p>
+                    <p class="text-gray-800 leading-relaxed whitespace-pre-wrap text-sm">{{ $post->comment }}</p>
                 </div>
 
                 {{-- いいねボタン --}}
@@ -236,12 +232,19 @@
             {{-- コメント一覧 --}}
             <div class="space-y-4">
                 @foreach($post->comments as $comment)
-                <div class="flex gap-3 py-3 border-b border-gray-100">
-                    {{-- 下線と余白を追加 --}}
-                    {{-- アイコン --}}
-                    <a href="..." class="shrink-0">
-                        <div class="h-9 w-9 rounded-full ...">...</div>
-                    </a>
+                <div class="flex gap-3 py-3 border-b border-gray-100 last:border-b-0">
+                        {{-- アイコン（ここを修正） --}}
+                        <a href="{{ route('users.show', $comment->user->id) }}" class="shrink-0">
+                            <div class="h-9 w-9 rounded-full bg-gray-100 overflow-hidden border border-gray-100">
+                                @if($comment->user->icon_path)
+                                    <img src="{{ asset($comment->user->icon_path) }}" class="w-full h-full object-cover">
+                                @else
+                                    <div class="w-full h-full flex items-center justify-center text-[10px] font-bold text-gray-400">
+                                        {{ mb_substr($comment->user->name, 0, 1) }}
+                                    </div>
+                                @endif
+                            </div>
+                        </a>
 
                     {{-- 右側 --}}
                     <div class="flex-1 min-w-0">

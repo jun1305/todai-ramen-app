@@ -55,13 +55,6 @@ Route::middleware('auth')->group(function () {
         return view('welcome', compact('posts', 'campaign'));
     })->name('home'); // 名前をつけておくと便利
 
-    // 投稿詳細
-    Route::get('/posts/{post}', [PostController::class, 'show'])->name('posts.show');
-
-    // コメント投稿・削除
-    Route::post('/posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
-    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
-
     // ▼ 投稿機能（作成・保存・編集・更新・削除・いいね）
     Route::get('/posts/create', [PostController::class, 'create'])->name('posts.create');
     Route::post('/posts', [PostController::class, 'store'])->name('posts.store');
@@ -69,6 +62,13 @@ Route::middleware('auth')->group(function () {
     Route::put('/posts/{post}', [PostController::class, 'update'])->name('posts.update');
     Route::delete('/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('/posts/{post}/like', [LikeController::class, 'toggle'])->name('posts.like');
+
+    // 投稿詳細
+    Route::get('/posts/{post}', [PostController::class, 'show'])->name('posts.show');
+
+    // コメント投稿・削除
+    Route::post('/posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
 
     // ▼ お店・ランキング
     Route::get('/shops', [ShopController::class, 'index'])->name('shops.index');
