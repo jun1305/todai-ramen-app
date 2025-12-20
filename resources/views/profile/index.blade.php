@@ -58,24 +58,31 @@
         </div>
 
         {{-- 名前表示エリア --}}
-        <div class="flex items-center justify-center gap-2 mb-3 relative z-10">
-            <h2 class="text-xl font-black text-gray-800 flex items-center gap-2">
-                {{ $user->name }}
-
-                {{-- ★★★ 連続投稿バッジ追加 ★★★ --}}
-                @if($user->streak_days >= 2)
-                    <span class="inline-flex items-center gap-0.5 bg-orange-100 text-orange-600 text-[10px] font-black px-1.5 py-0.5 rounded-md border border-orange-200" title="{{ $user->streak_days }}日連続投稿中！">
-                        🔥 {{ $user->streak_days }}日連続
-                    </span>
-                @endif
-            </h2>
+        <div class="flex flex-col items-center justify-center mb-3 relative z-10">
             
-            @if(Auth::id() === $user->id)
-            <button onclick="openNameModal()" class="text-gray-400 hover:text-blue-500 transition p-1" title="名前を変更">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                </svg>
-            </button>
+            {{-- 名前と編集ボタン --}}
+            <div class="flex items-center gap-2">
+                <h2 class="text-xl font-black text-gray-800">
+                    {{ $user->name }}
+                </h2>
+                
+                @if(Auth::id() === $user->id)
+                <button onclick="openNameModal()" class="text-gray-400 hover:text-blue-500 transition p-1" title="名前を変更">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                </button>
+                @endif
+            </div>
+
+            {{-- ★★★ 連続投稿バッジ（名前の下に移動） ★★★ --}}
+            @if($user->streak_days >= 2)
+                <div class="mt-1">
+                    <span class="inline-flex items-center gap-1 bg-gradient-to-r from-orange-100 to-red-50 text-orange-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-orange-100 shadow-sm" title="{{ $user->streak_days }}日連続投稿中！">
+                        <span class="animate-pulse">🔥</span> 
+                        {{ $user->streak_days }}日連続
+                    </span>
+                </div>
             @endif
         </div>
 
