@@ -11,26 +11,28 @@ class ShopController extends Controller
     {
         $search = $request->search;
 
-        // 1. 検索機能
-        $query = Shop::query();
+        // ▼▼▼ 修正1: $query を使い回さず、リスト用はリスト用で作る ▼▼▼
+        $shopsQuery = Shop::query(); // 名前を変更 ($query -> $shopsQuery)
         
         if ($search) {
-            $query->where('name', 'like', '%' . $search . '%')
+            $shopsQuery->where(function($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
                   ->orWhere('address', 'like', '%' . $search . '%');
+            });
         }
 
         // 2. リスト表示用
-        $shops = $query->with('latestPost')
+        $shops = $shopsQuery->with('latestPost')
             ->orderBy('posts_count', 'desc')
-            ->paginate(10);
+            ->paginate(10); // 10件ずつ表示（全部見たければ ->get() またはページャーを確認）
 
-        // 3. ピックアップ用（★修正: ランダムに5件取得）
-        // 検索時は表示しないので、検索がない時だけ取得
+        // 3. ピックアップ用（検索時は空）
         $pickupShops = collect();
         if (!$search) {
-            $pickupShops = Shop::whereHas('posts') // 投稿がある店のみ
+            // ▼▼▼ 修正2: 完全に別のクエリとして定義 ▼▼▼
+            $pickupShops = Shop::whereHas('posts')
                 ->with('latestPost')
-                ->inRandomOrder() // ★ここをランダムに変更
+                ->inRandomOrder()
                 ->limit(5)
                 ->get();
         }
