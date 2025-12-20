@@ -119,41 +119,46 @@
                     @endif
                 </div>
 
-                {{-- お店情報カード --}}
-                <a
-                    href="{{ route('shops.show', $post->shop_id) }}"
-                    class="flex items-center gap-3 p-3 rounded-xl bg-orange-50 border border-orange-100 mb-4 active:scale-[0.98] transition"
-                >
-                    <div
-                        class="h-10 w-10 rounded-full bg-white flex items-center justify-center text-orange-500 font-bold border border-orange-100 shadow-sm shrink-0"
-                    >
-                        📍
-                    </div>
-                    <div class="min-w-0">
-                        <div class="font-bold text-sm text-gray-800 truncate">
-                            {{ $post->shop_name }}
+                {{-- お店情報カード（上下分割スタイル） --}}
+                <div class="rounded-xl bg-orange-50 border border-orange-100 mb-4 overflow-hidden">
+                    
+                    {{-- 上段：店名（店詳細へ） --}}
+                    <a href="{{ route('shops.show', $post->shop_id) }}" class="flex items-center gap-3 p-3 hover:bg-orange-100/50 transition border-b border-orange-100/50">
+                        <div class="h-8 w-8 rounded-full bg-white flex items-center justify-center text-orange-500 font-bold border border-orange-100 shadow-sm shrink-0">
+                            📍
                         </div>
-                        <div class="text-xs text-gray-500 truncate">
-                            {{ $post->shop->address ?? '住所未登録' }}
+                        <div class="min-w-0 flex-1">
+                            <div class="font-bold text-sm text-gray-900 truncate">
+                                {{ $post->shop_name }}
+                            </div>
+                            <div class="text-[10px] text-orange-400 font-bold">
+                                お店詳細を見る
+                            </div>
                         </div>
-                    </div>
-                    <div class="ml-auto text-gray-400">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M9 5l7 7-7 7"
-                            />
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                         </svg>
-                    </div>
-                </a>
+                    </a>
+
+                    {{-- 下段：住所（マップへ） --}}
+                    <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($post->shop->name . ' ラーメン') }}" target="_blank" class="flex items-center gap-3 p-3 hover:bg-orange-100/50 transition">
+                        <div class="h-8 w-8 rounded-full bg-white flex items-center justify-center text-blue-400 font-bold border border-blue-100 shadow-sm shrink-0">
+                            🗺️
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs text-gray-600 truncate">
+                                {{ $post->shop->address ?? '住所未登録' }}
+                            </div>
+                            <div class="text-[10px] text-blue-400 font-bold">
+                                Googleマップで開く
+                            </div>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                    </a>
+
+                </div>
 
                 {{-- スコアと感想 --}}
                 <div class="mb-6">
