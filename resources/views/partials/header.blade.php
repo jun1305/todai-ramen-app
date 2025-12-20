@@ -206,46 +206,47 @@
 
             {{-- 2. メニューリンク一覧 --}}
             <div class="flex-1 overflow-y-auto py-2">
-                {{-- ★ ここから新機能エリア ★ --}}
+            {{-- ★ ここから新機能エリア ★ --}}
                 <div class="px-4 pt-4 pb-2">
                     <p class="text-xs font-bold text-gray-400 mb-2 pl-2">
                         スペシャル
                     </p>
 
-                    {{-- 今日の一杯 --}}
+                    {{-- 1. 今日の一杯 --}}
                     <a
                         href="{{ route('daily.index') }}"
                         class="flex items-center gap-3 px-4 py-3 mb-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl shadow-md hover:shadow-lg transition transform active:scale-95"
                     >
-                        <span class="text-2xl bg-white/20 p-1.5 rounded-lg"
-                            >📅</span
-                        >
+                        <span class="text-2xl bg-white/20 p-1.5 rounded-lg">📅</span>
                         <div>
-                            <span
-                                class="font-black text-sm block leading-none mb-0.5 text-orange-100"
-                                >Daily Ramen</span
-                            >
+                            <span class="font-black text-sm block leading-none mb-0.5 text-orange-100">Daily Ramen</span>
                             <span class="font-bold text-base">今日の一杯</span>
                         </div>
                     </a>
 
-                    {{-- ラーメンラリー --}}
-                    {{-- これもリンク先は後で --}}
+                    {{-- 2. ラーメンラリー --}}
+                    {{-- ▼▼▼ 修正: mb-2 を追加して隙間を確保 ▼▼▼ --}}
                     <a
                         href="{{ route('rallies.index') }}"
-                        class="flex items-center gap-3 px-4 py-3 bg-white border-2 border-slate-100 rounded-xl text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition transform active:scale-95"
+                        class="flex items-center gap-3 px-4 py-3 mb-2 bg-white border-2 border-slate-100 rounded-xl text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition transform active:scale-95"
                     >
-                        <span class="text-2xl bg-slate-100 p-1.5 rounded-lg"
-                            >🚩</span
-                        >
+                        <span class="text-2xl bg-slate-100 p-1.5 rounded-lg">🚩</span>
                         <div>
-                            <span
-                                class="font-bold text-xs block text-slate-400 leading-none mb-0.5"
-                                >制覇を目指せ！</span
-                            >
-                            <span class="font-bold text-base"
-                                >ラーメンラリー</span
-                            >
+                            <span class="font-bold text-xs block text-slate-400 leading-none mb-0.5">制覇を目指せ！</span>
+                            <span class="font-bold text-base">ラーメンラリー</span>
+                        </div>
+                    </a>
+
+                    {{-- 3. 丼顔フラッシュ --}}
+                    {{-- ▼▼▼ 修正: ここも mb-2 があっても問題ない（一番下なので） ▼▼▼ --}}
+                    <a
+                        href="{{ route('quiz.index') }}"
+                        class="flex items-center gap-3 px-4 py-3 mb-2 bg-gradient-to-r from-yellow-400 to-orange-400 text-white rounded-xl shadow-md hover:shadow-lg transition transform active:scale-95"
+                    >
+                        <span class="text-2xl bg-white/20 p-1.5 rounded-lg">🧠</span>
+                        <div>
+                            <span class="font-black text-sm block leading-none mb-0.5 text-yellow-100">Quiz</span>
+                            <span class="font-bold text-base">丼顔フラッシュ</span>
                         </div>
                     </a>
                 </div>

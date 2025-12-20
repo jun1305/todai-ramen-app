@@ -4,10 +4,11 @@
         {{-- メインカラム: 上下の余白(pt)と左右の余白(px)を少し詰めました --}}
         <div class="max-w-md mx-auto pt-4 px-2">
 
-            {{-- ▼▼▼ キャンペーン（ご指定のコード） ▼▼▼ --}}
+        {{-- ▼▼▼ キャンペーン ▼▼▼ --}}
             @if($campaign)
-            <div class="mb-4 px-1"> {{-- mb-6だと広いので mb-4 に詰めました --}}
+            <div class="mb-4 px-1">
                 <div class="relative bg-gradient-to-br from-red-600 to-red-700 rounded-2xl p-4 text-white shadow-md shadow-red-200 overflow-hidden group">
+                    {{-- 背景の装飾文字 --}}
                     <div class="absolute -right-4 -bottom-8 text-white opacity-10 font-black text-8xl italic select-none pointer-events-none transform group-hover:scale-110 transition duration-700">
                         x{{ $campaign->multiplier }}
                     </div>
@@ -19,7 +20,10 @@
                                     PICKUP
                                 </span>
                                 <h2 class="text-lg font-black leading-tight tracking-tight line-clamp-1">
-                                    {{ $campaign->title }}
+                                    {{-- ▼▼▼ 修正: リンクを追加（デザインは維持しつつ、ホバー時に下線を表示） ▼▼▼ --}}
+                                    <a href="{{ route('shops.show', $campaign->shop_id) }}" class="hover:underline hover:text-red-50 transition-colors">
+                                        {{ $campaign->title }}
+                                    </a>
                                 </h2>
                             </div>
 
@@ -29,6 +33,7 @@
                             </div>
                         </div>
 
+                        {{-- マップボタン（変更なし） --}}
                         <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($campaign->shop->name ?? '') }}+ラーメン"
                            target="_blank"
                            class="shrink-0 inline-flex items-center justify-center bg-white text-red-700 text-xs font-bold w-10 h-10 rounded-full hover:bg-red-50 transition shadow-sm group-hover:shadow-md">

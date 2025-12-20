@@ -111,6 +111,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/daily/{id}/edit', [DailyRamenController::class, 'edit'])->name('daily.edit');
     Route::put('/daily/{id}', [DailyRamenController::class, 'update'])->name('daily.update');
 
+    // ▼ 丼顔フラッシュクイズ
+    Route::get('/quiz', [App\Http\Controllers\QuizController::class, 'index'])->name('quiz.index');
+
     // ▼ ログアウト
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
