@@ -31,7 +31,7 @@
 
                         <div class="flex-1 min-w-0">
                             <h3 class="font-bold text-gray-800 truncate mb-1">{{ $shop->name }}</h3>
-                            <p class="text-xs text-gray-400 truncate mb-2">{{ $shop->address ?? '住所未登録' }}</p>
+                            <p class="text-xs text-gray-400 truncate mb-2">📍 {{ $shop->short_address ?? '住所未登録' }}</p>
                             
                             @if($shop->posts_avg_score)
                                 <div class="flex items-baseline gap-1 text-orange-500 leading-none">
