@@ -159,16 +159,12 @@ class RallyController extends Controller
     // ④ ラリー詳細画面
     public function show($id)
     {
-        // ==========================================
-        // ★キャッシュ廃止：リアルタイム取得
-        // ==========================================
-        
         $rally = Rally::with('shops')->findOrFail($id);
         
         $rallyCreatedAt = $rally->created_at;
         $targetShopIds = $rally->shops->pluck('id');
 
-        // 関連データのロード（挑戦者リストなど）
+        // 関連データのロード
         $rally->load(['shops.latestPost', 'challengers' => function($q) use ($rallyCreatedAt, $targetShopIds) {
             $q->orderByDesc('pivot_is_completed')
               ->orderBy('pivot_completed_at')
@@ -204,24 +200,9 @@ class RallyController extends Controller
                     }
                 }
 
-                // 達成判定（念のためアクセス時に同期チェック）
-                $totalShops = $rally->shops->count();
-                $conqueredCount = count($conqueredShopIds);
-                
-                $pivot = $user->joinedRallies()->where('rally_id', $rally->id)->first()->pivot;
-                $isActuallyCompleted = ($totalShops > 0 && $conqueredCount >= $totalShops);
-
-                if ($pivot->is_completed !== $isActuallyCompleted) {
-                    // ※ここで本来はUserモデルのcompleted_rallies_countやtotal_scoreの調整が必要になる可能性がありますが、
-                    // 基本的にはPostControllerで処理されているはずなので、ここではフラグの同期のみ行います。
-                    // もし「閲覧だけで達成扱いにする」場合は、前述のincrement処理が必要です。
-                    // 今回は「PostController/Rallyモデルで処理済み」という前提で、フラグ同期のみにします。
-                    
-                    $user->joinedRallies()->updateExistingPivot($rally->id, [
-                        'is_completed' => $isActuallyCompleted,
-                        'completed_at' => $isActuallyCompleted ? ($pivot->completed_at ?? now()) : null, 
-                    ]);
-                }
+                // ▼▼▼ 修正箇所：同期チェックを一発で行う ▼▼▼
+                // フラグ更新だけでなく、ポイント加減算もモデル内で安全に処理されます
+                $rally->syncUserStatus($user);
             }
         }
 

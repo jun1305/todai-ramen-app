@@ -57,9 +57,17 @@
             </div>
         </div>
 
+        {{-- 名前表示エリア --}}
         <div class="flex items-center justify-center gap-2 mb-3 relative z-10">
-            <h2 class="text-xl font-black text-gray-800">
+            <h2 class="text-xl font-black text-gray-800 flex items-center gap-2">
                 {{ $user->name }}
+
+                {{-- ★★★ 連続投稿バッジ追加 ★★★ --}}
+                @if($user->streak_days >= 2)
+                    <span class="inline-flex items-center gap-0.5 bg-orange-100 text-orange-600 text-[10px] font-black px-1.5 py-0.5 rounded-md border border-orange-200" title="{{ $user->streak_days }}日連続投稿中！">
+                        🔥 {{ $user->streak_days }}日連続
+                    </span>
+                @endif
             </h2>
             
             @if(Auth::id() === $user->id)

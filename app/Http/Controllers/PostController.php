@@ -156,7 +156,7 @@ class PostController extends Controller
         // Job実行（ラリー判定・ランキング更新）
         ProcessPostUpdate::dispatchAfterResponse($post, $oldShopId);
 
-        return redirect()->route('profile.index')->with('success', '投稿を更新しました！');
+        return redirect()->route('posts.show', $post)->with('success', '投稿を更新しました！');
     }
 
     // 削除
