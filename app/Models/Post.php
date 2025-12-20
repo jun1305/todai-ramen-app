@@ -49,4 +49,20 @@ class Post extends Model
     {
         return $this->hasMany(Comment::class)->latest(); // 新しい順
     }
+
+    public function calculatePoints(?Shop $shop = null): int
+    {
+        // shopが渡されなければリレーションから取得
+        $shop = $shop ?? $this->shop;
+
+        if (!$shop) return 1;
+
+        // アクティブなキャンペーンがあるか確認
+        // (Campaignモデルの実装に合わせて調整してください)
+        $hasCampaign = Campaign::where('shop_id', $shop->id)
+            ->where('is_active', true)
+            ->exists();
+
+        return $hasCampaign ? 2 : 1;
+    }
 }

@@ -39,19 +39,23 @@ class ProcessPostSubmission implements ShouldQueue
             }
 
             // 2. ラリー制覇判定
-            $relatedRallies = $user->joinedRallies()
-                ->whereHas('shops', function($q) use ($shop) {
-                    $q->where('shops.id', $shop->id);
-                })
-                ->get();
+            // この投稿のお店が含まれているラリーだけをチェックすればOK
+            if ($shop) {
+                $relatedRallies = $user->joinedRallies()
+                    ->whereHas('shops', function($q) use ($shop) {
+                        $q->where('shops.id', $shop->id);
+                    })
+                    ->get();
 
-            foreach ($relatedRallies as $rally) {
-                $rally->checkAndComplete($user);
+                foreach ($relatedRallies as $rally) {
+                    // ★修正: checkAndComplete ではなく syncUserStatus を使う
+                    // これにより「本当に条件を満たした瞬間」だけ +5pt されるようになります
+                    $rally->syncUserStatus($user);
+                }
             }
         });
 
-        // 3. 通知（トランザクションの外でOK）
-        // 全員に送ると重いので、必要に応じて絞るか、ここもさらに別のJobに分けるのがベスト
+        // 3. 通知（変更なし）
         $users = User::where('id', '!=', $user->id)->get();
         if ($users->isNotEmpty()) {
             Notification::send($users, new NewPost($this->post));

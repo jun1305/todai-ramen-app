@@ -27,12 +27,13 @@ class PostController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            // ... バリデーションルール ...
             'shop_name' => 'required|string|max:255',
             'score' => 'required|numeric|min:0|max:100',
             'comment' => 'nullable|string|max:1000',
             'image' => 'required|image|max:10240',
-            'address' => 'nullable|string|max:255',
-            'google_place_id' => 'nullable|string|max:255',
+            'address' => 'nullable|string',
+            'google_place_id' => 'nullable|string',
         ]);
 
         // トランザクション
@@ -65,20 +66,19 @@ class PostController extends Controller
             $post->eaten_at = now();
             $post->image_path = $imagePath;
 
-            $points = 1;
-            $hasCampaign = Campaign::where('shop_id', $shop->id)->where('is_active', true)->exists();
-            if ($hasCampaign) $points = 2;
+            // ★ポイント計算＆保存
+            $points = $post->calculatePoints($shop);
             $post->earned_points = $points;
-            
             $post->save();
 
+            // ★ユーザーにポイント加算 (1 or 2)
             $user->increment('total_score', $points);
             $user->increment('posts_count');
 
             return $post;
         });
 
-        // ジョブ実行（レスポンス後）
+        // Job実行（ラリー判定など）
         ProcessPostSubmission::dispatchAfterResponse($post);
 
         return redirect()->route('profile.index')->with('success', '投稿しました！');
@@ -91,12 +91,12 @@ class PostController extends Controller
         return view('posts.edit', compact('post'));
     }
 
-    // ④ 更新
     public function update(Request $request, Post $post)
     {
         if (Auth::id() !== $post->user_id) abort(403);
-        
+
         $validated = $request->validate([
+            // ... バリデーション ...
             'shop_name' => 'required',
             'score' => 'required|numeric|min:0|max:100',
             'comment' => 'nullable|string',
@@ -105,10 +105,11 @@ class PostController extends Controller
             'google_place_id' => 'nullable|string',
         ]);
 
-        DB::transaction(function () use ($request, $post, $validated) {
-            
-            // ★★★ 修正：ショップ特定ロジック（強化版） ★★★
-            // 名前が変わっていたら新しい店になる可能性があるので、ここでも同じロジックを通す
+        // 更新前の情報を保持
+        $oldShopId = $post->shop_id;
+        $oldPoints = $post->earned_points; // 元々持っていたポイント
+
+        DB::transaction(function () use ($request, $post, $validated, $oldPoints) {
             $shop = $this->findOrCreateShop($validated['shop_name'], $request->google_place_id, $request->address);
 
             // 画像処理
@@ -130,25 +131,58 @@ class PostController extends Controller
             $post->shop_name = $shop->name;
             $post->score = $validated['score'];
             $post->comment = $validated['comment'];
+
+            // ★ポイント再計算
+            // 店が変わればポイントが変わる可能性がある（キャンペーン店かどうか）
+            $newPoints = $post->calculatePoints($shop);
+            $post->earned_points = $newPoints;
             $post->save();
+
+            // ★差分をユーザーに反映
+            // 例: 通常店(1pt) -> キャンペーン店(2pt) に変更 = +1pt
+            // 例: キャンペーン店(2pt) -> 通常店(1pt) に変更 = -1pt
+            // 例: 変更なし = 0
+            $diff = $newPoints - $oldPoints;
+            if ($diff != 0) {
+                $user = Auth::user();
+                if ($diff > 0) {
+                    $user->increment('total_score', $diff);
+                } else {
+                    $user->decrement('total_score', abs($diff));
+                }
+            }
         });
 
-        if ($post->shop_id) {
-            ProcessPostUpdate::dispatchAfterResponse($post->shop_id);
-        }
+        // Job実行（ラリー判定・ランキング更新）
+        ProcessPostUpdate::dispatchAfterResponse($post, $oldShopId);
 
         return redirect()->route('profile.index')->with('success', '投稿を更新しました！');
     }
 
-    // 削除（変更なし）
+    // 削除
     public function destroy(Post $post)
     {
         if (Auth::id() !== $post->user_id) abort(403);
+
         $userId = $post->user_id;
         $shopId = $post->shop_id;
         $earnedPoints = $post->earned_points;
-        $post->delete();
-        ProcessPostDelete::dispatchAfterResponse($userId, $shopId, $earnedPoints);
+
+        DB::transaction(function () use ($post, $userId, $earnedPoints) {
+            // 投稿削除
+            $post->delete();
+
+            // ★ユーザーからポイントと投稿数を回収 (1 or 2)
+            $user = \App\Models\User::find($userId);
+            if ($user) {
+                $user->decrement('total_score', $earnedPoints);
+                $user->decrement('posts_count');
+            }
+        });
+
+        // Job実行（ラリー剥奪判定・ランキング更新）
+        ProcessPostDelete::dispatchAfterResponse($userId, $shopId);
+
         return back()->with('success', '投稿を削除しました。');
     }
 
