@@ -23,8 +23,9 @@ class ShopController extends Controller
 
         // 2. リスト表示用
         $shops = $shopsQuery->with('latestPost')
-            ->orderBy('posts_count', 'desc')
-            ->paginate(10); // 10件ずつ表示（全部見たければ ->get() またはページャーを確認）
+            ->orderBy('posts_count', 'desc') // メインの並び順
+            ->orderBy('id', 'desc')          // ★追加：同率のときはID順（これで順序が固定される）
+            ->paginate(10);
 
         // 3. ピックアップ用（検索時は空）
         $pickupShops = collect();
