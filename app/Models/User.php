@@ -100,42 +100,43 @@ class User extends Authenticatable
 
     public function getStreakDaysAttribute()
     {
-        // ユーザーの投稿日付（重複なし）を最新順に取得
+        // 1. 投稿日付のリストを取得（重複なし・最新順）
         $dates = $this->posts()
-            ->selectRaw('DATE(eaten_at) as date')
-            ->orderBy('date', 'desc')
-            ->distinct() // 1日2回投稿しても1日とカウント
-            ->pluck('date'); // Collectionとして取得
+            ->orderBy('eaten_at', 'desc')
+            ->get() // 一旦取得してから加工
+            ->map(fn($post) => $post->eaten_at->format('Y-m-d'))
+            ->unique()
+            ->values();
 
         if ($dates->isEmpty()) return 0;
 
-        $streak = 0;
+        // 2. ストリークが「現役」かチェック
+        // 最新の投稿が「今日」でも「昨日」でもなければ、記録は途切れているとみなす
+        $latestDateStr = $dates[0];
+        $latestDate = \Carbon\Carbon::parse($latestDateStr);
         
-        // 今日の日付
-        $today = Carbon::today();
-        $yesterday = Carbon::yesterday();
+        $today = \Carbon\Carbon::today();
+        $yesterday = \Carbon\Carbon::yesterday();
 
-        // 最新の投稿日が「今日」か「昨日」でなければ、ストリークは途切れている
-        $latestDate = Carbon::parse($dates->first());
         if (!$latestDate->isSameDay($today) && !$latestDate->isSameDay($yesterday)) {
-            return 0;
+            return 0; // 途切れているので表示しない
         }
 
-        // 連続チェック
-        // ※ 最新の日付から遡って、1日ずつ空いてないかチェック
-        // ただし、起点を「今日」にするか「最新投稿日」にするかでロジックが変わる。
-        // 一般的には「最新投稿日」を1日目として遡る。
-        
-        $currentCheckDate = $latestDate->copy();
+        // 3. 連続日数をカウント
+        $streak = 0;
+        // チェックの起点は「最新の投稿日」（今日かもしれないし、昨日かもしれない）
+        $checkDate = $latestDate->copy();
 
-        foreach ($dates as $dateString) {
-            $postDate = Carbon::parse($dateString);
+        foreach ($dates as $dateStr) {
+            $currentPostDate = \Carbon\Carbon::parse($dateStr);
 
-            if ($postDate->isSameDay($currentCheckDate)) {
+            // 期待する日付と一致していればカウントアップ
+            if ($currentPostDate->isSameDay($checkDate)) {
                 $streak++;
-                $currentCheckDate->subDay(); // 1日戻して次をチェック
+                // 次のチェック対象を「その前日」に設定
+                $checkDate->subDay();
             } else {
-                // 日付が飛んだら終了
+                // 日付が飛んだらそこで終了（過去の記録は合算しない）
                 break;
             }
         }
