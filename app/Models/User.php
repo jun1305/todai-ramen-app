@@ -89,4 +89,12 @@ class User extends Authenticatable
         return $this->belongsToMany(Rally::class, 'rally_likes', 'user_id', 'rally_id');
     }
 
+    // 行きたいお店（ブックマーク）
+    public function bookmarks()
+    {
+        return $this->belongsToMany(Shop::class, 'shop_bookmarks', 'user_id', 'shop_id')
+                    ->withTimestamps()
+                    ->orderByPivot('created_at', 'desc'); // 追加した順に表示
+    }
+
 }

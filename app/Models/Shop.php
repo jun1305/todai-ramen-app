@@ -69,4 +69,18 @@ class Shop extends Model
         
         $this->save();
     }
+
+    // この店をブックマークしているユーザー
+    public function bookmarkedByUsers()
+    {
+        return $this->belongsToMany(User::class, 'shop_bookmarks', 'shop_id', 'user_id')
+                    ->withTimestamps();
+    }
+
+    // 特定のユーザーがブックマークしているかチェック
+    public function isBookmarkedBy($user)
+    {
+        if (!$user) return false;
+        return $this->bookmarkedByUsers()->where('user_id', $user->id)->exists();
+    }
 }

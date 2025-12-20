@@ -15,6 +15,26 @@
                 <span class="text-sm font-bold ml-1">戻る</span>
             </a>
         </div>
+        {{-- ★★★ ここに追加！ブックマークボタン ★★★ --}}
+        @auth
+        <div class="absolute top-4 right-4 z-10" x-data="{ bookmarked: {{ $shop->isBookmarkedBy(Auth::user()) ? 'true' : 'false' }} }">
+            <button 
+                @click="fetch('{{ route('shops.bookmark', $shop) }}', { 
+                    method: 'POST', 
+                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } 
+                })
+                .then(res => res.json())
+                .then(data => { bookmarked = data.bookmarked; })"
+                class="flex flex-col items-center justify-center h-12 w-12 rounded-full shadow-md border transition duration-300"
+                :class="bookmarked ? 'bg-yellow-50 border-yellow-200 text-yellow-500' : 'bg-white border-gray-100 text-gray-300 hover:text-yellow-400'"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transition-transform active:scale-125" :class="bookmarked ? 'fill-current' : 'fill-none'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+                <span class="text-[8px] font-bold mt-0.5" x-text="bookmarked ? '登録中' : '保存'"></span>
+            </button>
+        </div>
+        @endauth
 
         <div class="px-6">
             <div class="flex items-start gap-4">

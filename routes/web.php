@@ -75,6 +75,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/shops/{id}', [ShopController::class, 'show'])->name('shops.show');
     Route::get('/ranking', [RankingController::class, 'index'])->name('ranking.index');
 
+    // ▼ ブックマーク機能
+    Route::get('/bookmarks', [App\Http\Controllers\BookmarkController::class, 'index'])->name('bookmarks.index');
+    Route::post('/shops/{shop}/bookmark', [App\Http\Controllers\BookmarkController::class, 'toggle'])->name('shops.bookmark');
+
     // ▼ ラーメンラリー（ここに追加）
     Route::get('/rallies', [RallyController::class, 'index'])->name('rallies.index');
     Route::get('/rallies/create', [RallyController::class, 'create'])->name('rallies.create');

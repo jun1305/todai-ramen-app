@@ -278,6 +278,14 @@
                         <span class="text-xl w-6 text-center">🍜</span>
                         お店図鑑
                     </a>
+                    {{-- 既存の「お店図鑑」の下に追加 --}}
+                    <a
+                        href="{{ route('bookmarks.index') }}"
+                        class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-yellow-50 hover:text-yellow-600 rounded-lg transition font-bold"
+                    >
+                        <span class="text-xl w-6 text-center">🔖</span>
+                        行きたいお店
+                    </a>
                 </div>
             </div>
 
