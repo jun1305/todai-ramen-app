@@ -145,7 +145,7 @@
                 },
 
                 getResultMessage() {
-                    if (this.score === 5) return '👑 神の舌を持つ者！';
+                    if (this.score === 5) return '👑 神の領域！';
                     if (this.score === 4) return '🍜 かなりのラーメン通！';
                     if (this.score >= 2) return '👍 なかなかのもの！';
                     return '🔰 まだまだ修行が必要！';
