@@ -183,7 +183,8 @@ class PostController extends Controller
         // Job実行（ラリー剥奪判定・ランキング更新）
         ProcessPostDelete::dispatchAfterResponse($userId, $shopId);
 
-        return back()->with('success', '投稿を削除しました。');
+        // ★修正: 削除後はマイページ(profile.index)へリダイレクト
+        return redirect()->route('profile.index')->with('success', '投稿を削除しました。');
     }
 
     // ==========================================
