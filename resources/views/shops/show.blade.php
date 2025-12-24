@@ -118,7 +118,9 @@
                             <span class="text-xs text-gray-400">({{ $shop->posts_count }}件の記録)</span>
                         </div>
                     @else
-                        <span class="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-md">まだスコアがありません</span>
+                        <div>
+                            <span class="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-md inline-block">まだスコアがありません</span>
+                        </div>
                     @endif
                 </div>
             </div>
