@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Post;
 use App\Models\Shop;
 use App\Models\Campaign;
+use App\Models\Genre;
 use Illuminate\Support\Facades\Auth;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
@@ -14,13 +15,17 @@ use Illuminate\Support\Facades\DB;
 use App\Jobs\ProcessPostSubmission;
 use App\Jobs\ProcessPostUpdate;
 use App\Jobs\ProcessPostDelete;
+use Illuminate\Support\Facades\Cache;
 
 class PostController extends Controller
 {
     // ① 投稿フォームを表示
     public function create()
     {
-        return view('posts.create');
+        // ジャンル一覧を取得
+        $genres = Genre::all();
+    
+        return view('posts.create', compact('genres'));
     }
 
     // ② 投稿を保存
@@ -34,6 +39,8 @@ class PostController extends Controller
             'image' => 'required|image|max:10240',
             'address' => 'nullable|string',
             'google_place_id' => 'nullable|string',
+            'genres' => 'nullable|array', // ★追加
+            'genres.*' => 'exists:genres,id', // ★追加
         ]);
 
         // トランザクション
@@ -42,6 +49,14 @@ class PostController extends Controller
 
             // ★★★ 修正：ショップ特定ロジック（強化版） ★★★
             $shop = $this->findOrCreateShop($validated['shop_name'], $request->google_place_id, $request->address);
+
+            // ▼▼▼ 追加: ジャンルの保存処理 ▼▼▼
+            if (!empty($request->genres)) {
+                // syncWithoutDetaching: 既に登録されているジャンルは維持しつつ、新しいものを追加
+                // (他のユーザーがつけたタグを消さないため、syncではなくsyncWithoutDetachingを使います)
+                $shop->genres()->syncWithoutDetaching($request->genres);
+            }
+            // ▲▲▲ 追加ここまで ▲▲▲
 
             // 画像処理
             $imagePath = null;
@@ -81,6 +96,8 @@ class PostController extends Controller
         // Job実行（ラリー判定など）
         ProcessPostSubmission::dispatchAfterResponse($post);
 
+        Cache::increment('ranking_version');
+
         return redirect()->route('profile.index')->with('success', '投稿しました！');
     }
 
@@ -88,7 +105,12 @@ class PostController extends Controller
     public function edit(Post $post)
     {
         if (Auth::id() !== $post->user_id) abort(403);
-        return view('posts.edit', compact('post'));
+        
+        // ▼▼▼ 追加: ジャンル一覧を取得 ▼▼▼
+        $genres = Genre::all();
+        // ▲▲▲ 追加ここまで ▲▲▲
+
+        return view('posts.edit', compact('post', 'genres')); // genresを渡す
     }
 
     public function update(Request $request, Post $post)
@@ -103,6 +125,8 @@ class PostController extends Controller
             'image' => 'nullable|image|max:10240',
             'address' => 'nullable|string',
             'google_place_id' => 'nullable|string',
+            'genres' => 'nullable|array', // ★追加
+            'genres.*' => 'exists:genres,id', // ★追加
         ]);
 
         // 更新前の情報を保持
@@ -111,6 +135,14 @@ class PostController extends Controller
 
         DB::transaction(function () use ($request, $post, $validated, $oldPoints) {
             $shop = $this->findOrCreateShop($validated['shop_name'], $request->google_place_id, $request->address);
+
+            // ▼▼▼ 追加: ジャンルの保存処理 (syncWithoutDetachingを使用) ▼▼▼
+            if (!empty($request->genres)) {
+                // お店のジャンルを更新
+                // 編集時は syncWithoutDetaching を使うことで、他の人のタグを残しつつ追加できる
+                $shop->genres()->syncWithoutDetaching($request->genres);
+            }
+            // ▲▲▲ 追加ここまで ▲▲▲
 
             // 画像処理
             if ($request->hasFile('image')) {
@@ -156,6 +188,8 @@ class PostController extends Controller
         // Job実行（ラリー判定・ランキング更新）
         ProcessPostUpdate::dispatchAfterResponse($post, $oldShopId);
 
+        Cache::increment('ranking_version');
+
         return redirect()->route('posts.show', $post)->with('success', '投稿を更新しました！');
     }
 
@@ -182,6 +216,8 @@ class PostController extends Controller
 
         // Job実行（ラリー剥奪判定・ランキング更新）
         ProcessPostDelete::dispatchAfterResponse($userId, $shopId);
+
+        Cache::increment('ranking_version');
 
         // ★修正: 削除後はマイページ(profile.index)へリダイレクト
         return redirect()->route('profile.index')->with('success', '投稿を削除しました。');

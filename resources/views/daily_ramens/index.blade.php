@@ -9,7 +9,16 @@
                     <h1
                         class="text-2xl font-black text-gray-900 tracking-tight leading-tight break-words"
                     >
-                        {{ $post->shop_name }}
+                    {{-- ▼▼▼ 修正: shop_id がある時だけリンクを生成する ▼▼▼ --}}
+                        @if($post->shop_id)
+                            <a href="{{ route('shops.show', $post->shop_id) }}" class="hover:text-orange-500 hover:underline transition-colors">
+                                {{ $post->shop_name }}
+                            </a>
+                        @else
+                            {{-- shop_id がない（古いデータなど）場合は、ただの文字として表示 --}}
+                            {{ $post->shop_name }}
+                        @endif
+                        {{-- ▲▲▲ 修正ここまで ▲▲▲ --}}
                     </h1>
                     <h2
                         class="text-xl text-gray-600 font-bold mt-1 leading-snug break-words"

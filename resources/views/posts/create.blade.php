@@ -195,6 +195,29 @@
                 }
             </script>
 
+            {{-- ▼▼▼ 追加: 3. ジャンル選択 ▼▼▼ --}}
+            <div class="space-y-2">
+                <label class="block text-sm font-bold text-gray-700">
+                    ジャンル <span class="text-gray-400 font-normal text-xs">(複数選択可)</span>
+                </label>
+                
+                <div class="flex flex-wrap gap-2">
+                    @foreach($genres as $genre)
+                        <label class="cursor-pointer">
+                            <input type="checkbox" name="genres[]" value="{{ $genre->id }}" class="peer sr-only"
+                                   @if(in_array($genre->id, old('genres', []))) checked @endif>
+                            <div class="px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 select-none
+                                        bg-white text-gray-500 border-gray-200
+                                        peer-checked:bg-orange-500 peer-checked:text-white peer-checked:border-orange-500 peer-checked:shadow-md
+                                        hover:bg-gray-50">
+                                {{ $genre->name }}
+                            </div>
+                        </label>
+                    @endforeach
+                </div>
+            </div>
+            {{-- ▲▲▲ 追加ここまで ▲▲▲ --}}
+
             <div
                 x-data="{ 
                 score: {{ old('score', $post->score ?? 85.0) }},

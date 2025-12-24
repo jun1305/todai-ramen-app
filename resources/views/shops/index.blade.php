@@ -1,23 +1,131 @@
 <x-app-layout title="お店図鑑">
-    <div class="pb-20 bg-gray-50 min-h-screen">
+    {{-- Alpine.jsデータ定義 --}}
+    {{-- genreOpen: モーダル開閉 --}}
+    {{-- selectedGenres: PHPから受け取った選択済みID配列をJS配列として初期化 --}}
+    <div class="pb-20 bg-gray-50 min-h-screen" 
+         x-data="{ 
+             genreOpen: false, 
+             selectedGenres: {{ json_encode($genreIds) }}.map(String) // 文字列として扱う
+         }">
 
-        {{-- 固定ヘッダー（検索バー） --}}
-        <div class="sticky top-0 z-20 bg-gray-50/90 backdrop-blur-md px-4 py-3 shadow-sm">
-            <form action="{{ route('shops.index') }}" method="GET">
-                <div class="relative">
-                    <input
-                        type="text"
-                        name="search"
-                        value="{{ request('search') }}"
-                        placeholder="店名やエリアで検索..."
-                        class="w-full pl-10 pr-4 py-2.5 rounded-full bg-white border-0 shadow-sm ring-1 ring-gray-200 focus:ring-2 focus:ring-orange-400 focus:outline-none transition text-sm"
-                    />
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 absolute left-3.5 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+        {{-- ★★★ 修正: 全体を囲むフォーム (GET送信) ★★★ --}}
+        <form action="{{ route('shops.index') }}" method="GET">
+
+            {{-- 固定ヘッダー --}}
+            <div class="sticky top-0 z-5 bg-gray-50/95 backdrop-blur-md shadow-sm pt-3 pb-3">
+                <div class="px-4">
+                    <div class="flex gap-2">
+                        {{-- 検索バー --}}
+                        <div class="relative flex-1">
+                            <input
+                                type="text"
+                                name="search"
+                                value="{{ request('search') }}"
+                                placeholder="店名やエリア..."
+                                class="w-full pl-9 pr-2 py-2.5 rounded-xl bg-white border-0 shadow-sm ring-1 ring-gray-200 focus:ring-2 focus:ring-orange-400 focus:outline-none transition text-sm"
+                            />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 absolute left-2.5 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+
+                        {{-- ジャンル選択トリガーボタン --}}
+                        <button 
+                            type="button" 
+                            @click="genreOpen = true"
+                            class="shrink-0 px-4 py-2.5 rounded-xl text-xs font-bold border shadow-sm transition flex items-center gap-1"
+                            :class="selectedGenres.length > 0 ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-600 border-gray-200'"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                            </svg>
+                            {{-- 選択数に応じてテキスト変化 --}}
+                            <span x-text="selectedGenres.length > 0 ? selectedGenres.length + '件選択中' : '絞り込み'"></span>
+                        </button>
+                    </div>
                 </div>
-            </form>
-        </div>
+            </div>
+
+            {{-- ▼▼▼ 複数選択モーダル ▼▼▼ --}}
+            <div 
+                x-show="genreOpen" 
+                class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+                x-transition.opacity
+                style="display: none;"
+            >
+                <div 
+                    @click.away="genreOpen = false"
+                    class="bg-white w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="translate-y-full sm:translate-y-10 opacity-0"
+                    x-transition:enter-end="translate-y-0 opacity-100"
+                    x-transition:leave="transition ease-in duration-200"
+                    x-transition:leave-start="translate-y-0 opacity-100"
+                    x-transition:leave-end="translate-y-full sm:translate-y-10 opacity-0"
+                >
+                    {{-- ヘッダー --}}
+                    <div class="p-4 border-b flex justify-between items-center bg-gray-50">
+                        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                            <span>🏷️</span> ジャンルを選択
+                        </h3>
+                        <button type="button" @click="genreOpen = false" class="p-1 text-gray-400 hover:text-gray-600 bg-gray-200 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {{-- 選択エリア（スクロール可） --}}
+                    <div class="p-4 overflow-y-auto">
+                        <div class="grid grid-cols-2 gap-2">
+                            @foreach($genres as $genre)
+                                <label class="cursor-pointer">
+                                    {{-- 実際のチェックボックス（配列 genre_ids[] として送信） --}}
+                                    <input 
+                                        type="checkbox" 
+                                        name="genre_ids[]" 
+                                        value="{{ $genre->id }}" 
+                                        class="peer sr-only" 
+                                        x-model="selectedGenres"
+                                    >
+                                    {{-- 見た目のボタン --}}
+                                    <div class="py-3 px-2 text-center text-sm font-bold rounded-lg border-2 transition select-none
+                                                bg-white text-gray-500 border-gray-100
+                                                peer-checked:bg-orange-50 peer-checked:text-orange-600 peer-checked:border-orange-500 peer-checked:shadow-inner
+                                                hover:bg-gray-50">
+                                        {{ $genre->name }}
+                                    </div>
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    {{-- フッター（決定ボタン） --}}
+                    <div class="p-4 border-t bg-white safe-area-bottom">
+                        <div class="flex gap-3">
+                            {{-- クリアボタン --}}
+                            <button 
+                                type="button" 
+                                @click="selectedGenres = []"
+                                class="flex-1 py-3 font-bold text-gray-500 bg-gray-100 rounded-xl hover:bg-gray-200 transition"
+                            >
+                                クリア
+                            </button>
+                            {{-- 検索ボタン --}}
+                            <button 
+                                type="submit" 
+                                class="flex-[2] py-3 font-bold text-white bg-orange-500 rounded-xl shadow-lg hover:bg-orange-600 active:scale-95 transition"
+                            >
+                                この条件で検索
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{-- ▲▲▲ モーダルここまで ▲▲▲ --}}
+
+        </form>
+        {{-- ★★★ フォーム終了 ★★★ --}}
 
         {{-- ① ピックアップ（ランダム・横スクロール） --}}
         @if($pickupShops->isNotEmpty() && !request('search'))

@@ -1,7 +1,4 @@
 <x-app-layout title="{{ $shop->name }}">
-    {{-- ========================================== --}}
-    {{-- 店舗情報ヘッダー --}}
-    {{-- ========================================== --}}
     <div class="bg-white shadow-sm border-b border-gray-100 mb-4 -mx-4 -mt-4 pb-6 pt-safe relative">
         
         {{-- 戻るボタン --}}
@@ -15,26 +12,45 @@
                 <span class="text-sm font-bold ml-1">戻る</span>
             </a>
         </div>
-        {{-- ★★★ ここに追加！ブックマークボタン ★★★ --}}
-        @auth
-        <div class="absolute top-4 right-4 z-10" x-data="{ bookmarked: {{ $shop->isBookmarkedBy(Auth::user()) ? 'true' : 'false' }} }">
-            <button 
-                @click="fetch('{{ route('shops.bookmark', $shop) }}', { 
-                    method: 'POST', 
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } 
-                })
-                .then(res => res.json())
-                .then(data => { bookmarked = data.bookmarked; })"
-                class="flex flex-col items-center justify-center h-12 w-12 rounded-full shadow-md border transition duration-300"
-                :class="bookmarked ? 'bg-yellow-50 border-yellow-200 text-yellow-500' : 'bg-white border-gray-100 text-gray-300 hover:text-yellow-400'"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transition-transform active:scale-125" :class="bookmarked ? 'fill-current' : 'fill-none'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
-                <span class="text-[8px] font-bold mt-0.5" x-text="bookmarked ? '登録中' : '保存'"></span>
-            </button>
+
+        {{-- ★★★ 修正: 右上のボタンエリア（保存 ＆ 編集を縦並びに） ★★★ --}}
+        {{-- ★★★ 修正: 右上のボタンエリア（縦並び・デザイン調整） ★★★ --}}
+        <div class="absolute top-4 right-4 z-10 flex flex-col items-center gap-3">
+            
+            {{-- ① 保存ボタン（丸型・変更なし） --}}
+            @auth
+            <div x-data="{ bookmarked: {{ $shop->isBookmarkedBy(Auth::user()) ? 'true' : 'false' }} }">
+                <button 
+                    @click="fetch('{{ route('shops.bookmark', $shop) }}', { 
+                        method: 'POST', 
+                        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' } 
+                    })
+                    .then(res => res.json())
+                    .then(data => { bookmarked = data.bookmarked; })"
+                    class="flex flex-col items-center justify-center h-12 w-12 rounded-full shadow-md border transition duration-300"
+                    :class="bookmarked ? 'bg-yellow-50 border-yellow-200 text-yellow-500' : 'bg-white border-gray-100 text-gray-300 hover:text-yellow-400'"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transition-transform active:scale-125" :class="bookmarked ? 'fill-current' : 'fill-none'" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                    </svg>
+                    <span class="text-[8px] font-bold mt-0.5" x-text="bookmarked ? '登録中' : '保存'"></span>
+                </button>
+            </div>
+            @endauth
+
+            {{-- ② 編集ボタン（管理者のみ・横長のデザインに戻す） --}}
+            @if(auth()->id() === 1)
+                <a href="{{ route('shops.edit', $shop) }}" 
+                   class="bg-white/90 backdrop-blur-sm border border-gray-200 shadow-sm text-gray-500 hover:text-orange-600 hover:border-orange-200 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    編集
+                </a>
+            @endif
+
         </div>
-        @endauth
+        {{-- ★★★ 修正ここまで ★★★ --}}
 
         <div class="px-6">
             <div class="flex items-start gap-4">
@@ -51,9 +67,26 @@
 
                 {{-- 店名 & スコア --}}
                 <div class="flex-1 min-w-0 pt-1">
-                    <h1 class="text-xl font-black text-gray-800 leading-tight mb-2">
-                        {{ $shop->name }}
-                    </h1>
+                    {{-- ▼▼▼ 修正: flex justify-between で左右配置 ▼▼▼ --}}
+                    <div class="flex justify-between items-start mb-2">
+                        {{-- 店名 --}}
+                        <h1 class="text-xl font-black text-gray-800 leading-tight">
+                            {{ $shop->name }}
+                        </h1>
+                    </div>
+                    {{-- ▲▲▲ 修正ここまで ▲▲▲ --}}
+
+                    {{-- ▼▼▼ 追加: ジャンルタグ表示 ▼▼▼ --}}
+                    @if($shop->genres->isNotEmpty())
+                        <div class="flex flex-wrap gap-1 mb-2">
+                            @foreach($shop->genres as $genre)
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md border bg-orange-50 text-orange-600 border-orange-100">
+                                    {{ $genre->name }}
+                                </span>
+                            @endforeach
+                        </div>
+                    @endif
+                    {{-- ▲▲▲ 追加ここまで ▲▲▲ --}}
                     
                     {{-- 住所（モデルの short_address を使用） --}}
                     @if($shop->address)

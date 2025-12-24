@@ -83,4 +83,10 @@ class Shop extends Model
         if (!$user) return false;
         return $this->bookmarkedByUsers()->where('user_id', $user->id)->exists();
     }
+
+    // お店のジャンル
+    public function genres()
+    {
+        return $this->belongsToMany(Genre::class, 'genre_shop')->withTimestamps();
+    }
 }

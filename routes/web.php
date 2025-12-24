@@ -75,6 +75,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/shops/{id}', [ShopController::class, 'show'])->name('shops.show');
     Route::get('/ranking', [RankingController::class, 'index'])->name('ranking.index');
 
+    // ★追加: お店情報の編集 (resourceなら自動生成されていますが、手動の場合は追加)
+    Route::get('/shops/{shop}/edit', [App\Http\Controllers\ShopController::class, 'edit'])->name('shops.edit');
+    Route::put('/shops/{shop}', [App\Http\Controllers\ShopController::class, 'update'])->name('shops.update');
+
     // ▼ ブックマーク機能
     Route::get('/bookmarks', [App\Http\Controllers\BookmarkController::class, 'index'])->name('bookmarks.index');
     Route::post('/shops/{shop}/bookmark', [App\Http\Controllers\BookmarkController::class, 'toggle'])->name('shops.bookmark');

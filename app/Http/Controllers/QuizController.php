@@ -10,46 +10,77 @@ class QuizController extends Controller
 {
     public function index()
     {
-        // 修正点: 「投稿」ではなく「お店」を基準にランダムに5件選ぶ
-        // 条件: 画像付きの投稿(posts)を持っているお店であること
-        $targetShops = Shop::whereHas('posts', function($query) {
+        // クイズの正解となるお店を5件取得
+        // ★最適化: N+1問題を防ぐため genres も一緒にロードしておく
+        $targetShops = Shop::with('genres') 
+            ->whereHas('posts', function($query) {
                 $query->whereNotNull('image_path');
             })
             ->inRandomOrder()
             ->limit(5)
             ->get();
 
-        // 5店舗未満ならエラー
         if ($targetShops->count() < 5) {
             return redirect()->route('home')->with('error', 'クイズを作るための投稿（お店の数）がまだ足りません！');
         }
 
-        // Vue/Alpine.js 用データ作成
         $questions = $targetShops->map(function ($shop) {
             
-            // そのお店の画像付き投稿から、ランダムに1枚選ぶ
+            // ① 画像の取得
             $post = $shop->posts()
                 ->whereNotNull('image_path')
                 ->inRandomOrder()
                 ->first();
 
-            // ダミーの選択肢を3つ取得（正解の店以外からランダム）
-            $wrongShops = Shop::where('id', '!=', $shop->id)
-                ->inRandomOrder()
-                ->limit(3)
-                ->get();
-
-            // 選択肢をマージ
-            $options = collect();
-            $options->push(['name' => $shop->name, 'is_correct' => true]);
+            // =============================================
+            // ② 選択肢（ハズレ枠）の生成ロジック変更
+            // =============================================
             
+            // 正解のお店のジャンルIDリストを取得
+            $genreIds = $shop->genres->pluck('id');
+            
+            $wrongShops = collect();
+
+            // A. まずは「同じジャンル」のお店を探す
+            if ($genreIds->isNotEmpty()) {
+                $wrongShops = Shop::where('id', '!=', $shop->id)
+                    ->whereHas('genres', function($q) use ($genreIds) {
+                        $q->whereIn('genres.id', $genreIds);
+                    })
+                    ->inRandomOrder()
+                    ->limit(3)
+                    ->get();
+            }
+
+            // B. 足りない分を「その他のお店」から埋める
+            $neededCount = 3 - $wrongShops->count();
+
+            if ($neededCount > 0) {
+                // 除外IDリスト（正解の店 + すでに選ばれた同ジャンルの店）
+                $excludeIds = $wrongShops->pluck('id')->push($shop->id);
+
+                $fillers = Shop::whereNotIn('id', $excludeIds)
+                    ->inRandomOrder()
+                    ->limit($neededCount)
+                    ->get();
+                
+                // コレクションを結合
+                $wrongShops = $wrongShops->merge($fillers);
+            }
+            // =============================================
+
+            // 選択肢データの整形
+            $options = collect();
+            // 正解
+            $options->push(['name' => $shop->name, 'is_correct' => true]);
+            // 不正解
             foreach ($wrongShops as $wrongShop) {
                 $options->push(['name' => $wrongShop->name, 'is_correct' => false]);
             }
 
             return [
                 'image_url' => asset($post->image_path),
-                'options' => $options->shuffle()->values(),
+                'options' => $options->shuffle()->values(), // シャッフル
                 'correct_name' => $shop->name,
             ];
         });

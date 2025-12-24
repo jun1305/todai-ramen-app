@@ -43,6 +43,31 @@
                 <p class="text-xs text-gray-400 mt-1 ml-1">※Googleマップの候補から修正できます</p>
             </div>
 
+            {{-- ▼▼▼ 追加: ジャンル選択エリア ▼▼▼ --}}
+            <div class="mb-6">
+                <label class="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-1">
+                    <span class="text-gray-400">🏷️</span> ジャンル <span class="text-xs font-normal text-gray-400 ml-1">（複数選択可）</span>
+                </label>
+                
+                <div class="flex flex-wrap gap-2">
+                    @foreach($genres as $genre)
+                        <label class="cursor-pointer">
+                            <input type="checkbox" name="genres[]" value="{{ $genre->id }}" class="peer sr-only"
+                                   {{-- 既に紐付いているジャンルならチェックを入れる --}}
+                                   @if($post->shop->genres->contains($genre->id)) checked @endif
+                            >
+                            <div class="px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 select-none
+                                        bg-white text-gray-500 border-gray-200
+                                        peer-checked:bg-orange-500 peer-checked:text-white peer-checked:border-orange-500 peer-checked:shadow-md
+                                        hover:bg-gray-50">
+                                {{ $genre->name }}
+                            </div>
+                        </label>
+                    @endforeach
+                </div>
+            </div>
+            {{-- ▲▲▲ 追加ここまで ▲▲▲ --}}
+
             {{-- ② 評価（100点満点版） --}}
             <div class="mb-8" x-data="{ 
                 score: {{ old('score', $post->score) }},
