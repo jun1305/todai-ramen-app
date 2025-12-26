@@ -33,15 +33,19 @@
                     ラーメンの写真 <span class="text-red-500">*</span>
                 </label>
                 
-                {{-- プレビューエリア --}}
-                {{-- aspect-video を削除し、画像があるときは高さを自動にする --}}
-                <div class="relative w-full bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 overflow-hidden hover:bg-gray-50 transition cursor-pointer group"
-                     :class="!imagePreview ? 'aspect-video' : ''"
-                     @click="document.getElementById('image').click()">
+                {{-- ▼▼▼ 修正: 画像プレビュー機能 ▼▼▼ --}}
+            <div class="space-y-2" x-data="{ imagePreview: null }">
+                <label class="block text-sm font-bold text-gray-700">
+                    ラーメンの写真 <span class="text-red-500">*</span>
+                </label>
+                
+                {{-- クリック領域全体をラベルにしてしまうのが一番確実 --}}
+                <label for="image" 
+                       class="relative block w-full bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 overflow-hidden hover:bg-gray-50 transition cursor-pointer group"
+                       :class="!imagePreview ? 'aspect-video' : ''">
                     
                     {{-- 画像がある場合：プレビュー表示 --}}
                     <template x-if="imagePreview">
-                        {{-- object-contain に変更して全体を表示 --}}
                         <img :src="imagePreview" class="w-full h-auto max-h-[500px] object-contain mx-auto">
                     </template>
 
@@ -55,31 +59,31 @@
                         </div>
                     </template>
                     
-                    {{-- 画像選択後の変更案内（右下に小さく出す） --}}
+                    {{-- 画像選択後の変更案内 --}}
                     <template x-if="imagePreview">
                         <div class="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] px-2 py-1 rounded-full pointer-events-none">
                             タップして変更
                         </div>
                     </template>
-                </div>
 
-                {{-- 実際のファイル入力 --}}
-                <input
-                    type="file"
-                    name="image"
-                    id="image"
-                    accept="image/*"
-                    required
-                    class="hidden"
-                    @change="
-                        const file = $event.target.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (e) => { imagePreview = e.target.result };
-                            reader.readAsDataURL(file);
-                        }
-                    "
-                />
+                    {{-- 実際のファイル入力（ラベルの中に入れて隠す） --}}
+                    <input
+                        type="file"
+                        name="image"
+                        id="image"
+                        accept="image/*"
+                        required
+                        class="sr-only" {{-- hidden ではなく sr-only 推奨 --}}
+                        @change="
+                            const file = $event.target.files[0];
+                            if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (e) => { imagePreview = e.target.result };
+                                reader.readAsDataURL(file);
+                            }
+                        "
+                    />
+                </label>
             </div>
             {{-- ▲▲▲ 修正ここまで ▲▲▲ --}}
 
@@ -112,7 +116,7 @@
 
             @push('scripts')
             <script src="https://maps.googleapis.com/maps/api/js?key={{
-                    env('GOOGLE_MAPS_API_KEY')
+                    config('GOOGLE_MAPS_API_KEY')
                 }}&libraries=places&language=ja&callback=Function.prototype"></script>
             @endpush
 

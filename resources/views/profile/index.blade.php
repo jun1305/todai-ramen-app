@@ -98,7 +98,7 @@
         </div>
         
         <script>
-            window.VAPID_PUBLIC_KEY = "{{ env('VAPID_PUBLIC_KEY') }}";
+            window.VAPID_PUBLIC_KEY = "{{ config('services.webpush.vapid_public_key') }}";
             function pushNotifications() {
                 return {
                     isSubscribed: false, loading: true, errorMessage: '',

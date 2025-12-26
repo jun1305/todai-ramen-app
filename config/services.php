@@ -39,4 +39,8 @@ return [
         'key' => env('GOOGLE_MAPS_API_KEY'),
     ],
 
+    'webpush' => [
+        'vapid_public_key' => env('VAPID_PUBLIC_KEY'),
+    ],
+
 ];
