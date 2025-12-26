@@ -27,13 +27,8 @@
             enctype="multipart/form-data"
         >
             @csrf
-            {{-- ▼▼▼ 修正: 画像プレビュー機能 (スタイル調整版) ▼▼▼ --}}
-            <div class="space-y-2" x-data="{ imagePreview: null }">
-                <label class="block text-sm font-bold text-gray-700">
-                    ラーメンの写真 <span class="text-red-500">*</span>
-                </label>
                 
-                {{-- ▼▼▼ 修正: 画像プレビュー機能 ▼▼▼ --}}
+            {{-- ▼▼▼ 修正: 画像プレビュー機能 ▼▼▼ --}}
             <div class="space-y-2" x-data="{ imagePreview: null }">
                 <label class="block text-sm font-bold text-gray-700">
                     ラーメンの写真 <span class="text-red-500">*</span>
