@@ -96,8 +96,6 @@ class PostController extends Controller
         // Job実行（ラリー判定など）
         ProcessPostSubmission::dispatchAfterResponse($post);
 
-        Cache::increment('ranking_version');
-
         return redirect()->route('profile.index')->with('success', '投稿しました！');
     }
 
@@ -188,8 +186,6 @@ class PostController extends Controller
         // Job実行（ラリー判定・ランキング更新）
         ProcessPostUpdate::dispatchAfterResponse($post, $oldShopId);
 
-        Cache::increment('ranking_version');
-
         return redirect()->route('posts.show', $post)->with('success', '投稿を更新しました！');
     }
 
@@ -216,8 +212,6 @@ class PostController extends Controller
 
         // Job実行（ラリー剥奪判定・ランキング更新）
         ProcessPostDelete::dispatchAfterResponse($userId, $shopId);
-
-        Cache::increment('ranking_version');
 
         // ★修正: 削除後はマイページ(profile.index)へリダイレクト
         return redirect()->route('profile.index')->with('success', '投稿を削除しました。');
