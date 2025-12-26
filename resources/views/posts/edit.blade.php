@@ -1,7 +1,7 @@
 <x-app-layout title="投稿を編集">
     {{-- Google Maps API --}}
     @push('scripts')
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=places&language=ja&callback=Function.prototype"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.key') }}&libraries=places&language=ja&callback=Function.prototype"></script>
     @endpush
 
     <div class="max-w-xl mx-auto p-6 pb-20">

@@ -2,7 +2,7 @@
     {{-- Google Maps API --}}
     @push('scripts')
     <script src="https://maps.googleapis.com/maps/api/js?key={{
-            env('GOOGLE_MAPS_API_KEY')
+            config('services.google_maps.key')
         }}&libraries=places&language=ja&callback=Function.prototype"></script>
     @endpush
 

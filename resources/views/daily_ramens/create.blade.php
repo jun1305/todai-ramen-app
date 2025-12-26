@@ -91,7 +91,7 @@
     {{-- Google Maps API --}}
     {{-- ※ APIキーは環境変数等で管理することを推奨します --}}
     <script src="https://maps.googleapis.com/maps/api/js?key={{
-            env('GOOGLE_MAPS_API_KEY')
+            config('services.google_maps.key') 
         }}&libraries=places&language=ja"></script>
 
     <script>

@@ -1,8 +1,6 @@
 <x-app-layout title="記録する">
     @push('scripts')
-    <script src="https://maps.googleapis.com/maps/api/js?key={{
-            env('GOOGLE_MAPS_API_KEY')
-        }}&libraries=places&language=ja"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{config('services.google_maps.key') }}&libraries=places&language=ja"></script>
     @endpush
 
     <div class="p-4">
