@@ -74,7 +74,7 @@ class RankingController extends Controller
 
     private function getRankingVersion()
     {
-        return Cache::get('ranking_version', 1);
+        return Cache::get('ranking_version', 0);
     }
 
     // A. 部員ランキング (変更なし)
